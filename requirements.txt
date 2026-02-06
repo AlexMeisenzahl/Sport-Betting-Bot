@@ -1,0 +1,29 @@
+# Sports Betting Bot - Python Dependencies
+
+# Core dependencies
+PyYAML>=6.0.1
+
+# For potential future real API integrations
+# (Currently using mock data for paper trading)
+
+# Uncomment below if you want to add real data sources:
+
+# NBA data
+# nba_api>=1.1.14
+
+# NFL data
+# nfl-data-py>=0.3.0
+
+# MLB data
+# pybaseball>=2.2.7
+
+# General sports data
+# sportsipy>=0.6.0
+
+# Odds API (if using the-odds-api.com)
+# requests>=2.31.0
+
+# Optional: For advanced analytics
+# numpy>=1.24.0
+# pandas>=2.0.0
+# scikit-learn>=1.3.0

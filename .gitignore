@@ -1,0 +1,53 @@
+# Ignore Python cache and compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Ignore virtual environments
+venv/
+env/
+ENV/
+.venv
+
+# Ignore log files
+*.log
+betting_bot_*.log
+
+# Ignore IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Ignore OS files
+.DS_Store
+Thumbs.db
+
+# Ignore test coverage
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Ignore data files (if you add any)
+data/
+*.csv
+*.db
+*.sqlite
+
+# Ignore API keys and secrets
+secrets.yaml
+.env
+*.key
+
+# Ignore build artifacts
+build/
+dist/
+*.egg-info/
+
+# Ignore temporary files
+tmp/
+temp/
+*.tmp
