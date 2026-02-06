@@ -1,0 +1,124 @@
+# ===== PAPER TRADING =====
+paper_trading:
+  enabled: true
+  starting_bankroll: 500
+  realistic_mode: true
+  simulate_vig: true
+  simulate_delays: true
+
+# ===== STRATEGIES =====
+strategies:
+  arbitrage:
+    enabled: true
+    min_profit_percent: 0.5
+    
+  clv_model:
+    enabled: true
+    min_edge_points: 1.5
+    confidence_threshold: 0.60
+    
+  sharp_tracker:
+    enabled: true
+    min_sharp_score: 70
+    
+  prop_analyzer:
+    enabled: true
+    min_edge_percent: 10
+    
+  live_betting:
+    enabled: true
+    min_edge_percent: 5
+
+# ===== SPORTS =====
+sports:
+  nba:
+    enabled: true
+    strategies: ['arbitrage', 'clv_model', 'sharp_tracker', 'props', 'live']
+    
+  nfl:
+    enabled: true
+    strategies: ['arbitrage', 'clv_model', 'sharp_tracker', 'live']
+    
+  mlb:
+    enabled: true
+    strategies: ['arbitrage', 'clv_model', 'props']
+    
+  nhl:
+    enabled: true
+    strategies: ['arbitrage', 'live']
+    
+  soccer:
+    enabled: true
+    strategies: ['arbitrage', 'clv_model']
+    
+  ncaaf:
+    enabled: true
+    strategies: ['arbitrage', 'clv_model', 'sharp_tracker']
+    
+  ncaab:
+    enabled: true
+    strategies: ['arbitrage', 'clv_model', 'props']
+
+# ===== SPORTSBOOKS =====
+sportsbooks:
+  fanduel:
+    enabled: true
+    api_key: ""  # Optional for paper trading
+    
+  draftkings:
+    enabled: true
+    api_key: ""
+    
+  betmgm:
+    enabled: true
+    api_key: ""
+    
+  caesars:
+    enabled: true
+    api_key: ""
+    
+  pointsbet:
+    enabled: true
+    api_key: ""
+
+# ===== RISK MANAGEMENT =====
+risk_management:
+  max_daily_loss_percent: 0.10
+  max_total_drawdown_percent: 0.20
+  max_concurrent_bets: 10
+  position_sizing_method: "kelly_fraction"
+  kelly_fraction: 0.25
+
+# ===== DATA SOURCES =====
+data_sources:
+  odds_api:
+    provider: "the-odds-api"
+    api_key: ""  # Optional for paper trading
+    update_frequency_seconds: 10
+    
+  stats_api:
+    nba: "nba_api"
+    nfl: "nfl_data_py"
+    mlb: "pybaseball"
+    nhl: "nhl_api"
+
+# ===== TESTING =====
+testing:
+  duration_days: 30
+  auto_disable_losers: true
+  min_sample_size: 20
+  
+  performance_thresholds:
+    min_win_rate: 0.524  # 52.4% to beat -110 vig
+    min_roi: 0.02
+    min_clv: 0.5
+    
+  reallocation_frequency_days: 7
+
+# ===== NOTIFICATIONS =====
+notifications:
+  desktop: true
+  alert_on:
+    - "High value opportunity (>5% edge)"
+    - "Daily loss limit approaching"
+    - "30-day test complete"
