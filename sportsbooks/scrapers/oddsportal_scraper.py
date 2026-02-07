@@ -153,18 +153,24 @@ class OddsPortalScraper(BaseScraper):
                 # Away is underdog - should be positive
                 away_ml = random.randint(+105, +250)
             
+            # Generate spread (one line, inverse for away)
+            spread_line = random.uniform(-10, 10)
+            
+            # Generate total (same line for over/under)
+            total_line = random.uniform(200, 230)
+            
             odds[book] = {
                 'moneyline': {
                     'home': home_ml,
                     'away': away_ml
                 },
                 'spread': {
-                    'home': {'line': random.uniform(-10, 10), 'odds': -110},
-                    'away': {'line': random.uniform(-10, 10), 'odds': -110}
+                    'home': {'line': spread_line, 'odds': -110},
+                    'away': {'line': -spread_line, 'odds': -110}
                 },
                 'total': {
-                    'over': {'line': random.uniform(200, 230), 'odds': -110},
-                    'under': {'line': random.uniform(200, 230), 'odds': -110}
+                    'over': {'line': total_line, 'odds': -110},
+                    'under': {'line': total_line, 'odds': -110}
                 }
             }
         

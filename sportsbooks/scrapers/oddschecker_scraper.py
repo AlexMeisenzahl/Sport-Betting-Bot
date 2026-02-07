@@ -149,18 +149,24 @@ class OddsCheckerScraper(BaseScraper):
                 # Away is underdog - should be positive
                 away_ml = random.randint(+105, +230)
             
+            # Generate spread (one line, inverse for away)
+            spread_line = random.uniform(-9, 9)
+            
+            # Generate total (same line for over/under)
+            total_line = random.uniform(205, 225)
+            
             odds[book] = {
                 'moneyline': {
                     'home': home_ml,
                     'away': away_ml
                 },
                 'spread': {
-                    'home': {'line': random.uniform(-9, 9), 'odds': -110},
-                    'away': {'line': random.uniform(-9, 9), 'odds': -110}
+                    'home': {'line': spread_line, 'odds': -110},
+                    'away': {'line': -spread_line, 'odds': -110}
                 },
                 'total': {
-                    'over': {'line': random.uniform(205, 225), 'odds': -110},
-                    'under': {'line': random.uniform(205, 225), 'odds': -110}
+                    'over': {'line': total_line, 'odds': -110},
+                    'under': {'line': total_line, 'odds': -110}
                 }
             }
         
