@@ -4,6 +4,10 @@
 PyYAML>=6.0.1
 requests>=2.31.0       # HTTP requests for API calls
 
+# Testing dependencies
+pytest>=7.0.0          # Testing framework
+pytest-mock>=3.10.0    # Mocking for pytest
+
 # Web Scraping (for free odds data)
 beautifulsoup4>=4.11.0 # HTML parsing
 lxml>=4.9.0            # Fast XML/HTML parser
