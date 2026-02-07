@@ -225,6 +225,120 @@ chmod 600 config.yaml
 
 ---
 
+## 🔌 Live API Integration
+
+The bot now supports live sports betting data through **The Odds API** and **ESPN API** for real-time odds and game information.
+
+### 🎯 Quick Start - Paper Trading (No API Keys Needed)
+
+By default, the bot runs in **mock mode** for safe paper trading:
+
+```yaml
+data_sources:
+  odds_api:
+    use_mock: true  # Uses simulated data
+  espn_api:
+    use_mock: true  # Uses simulated data
+```
+
+No setup required! Just run the bot and it will use realistic mock data.
+
+### 🚀 Upgrade to Live Data (Optional)
+
+For live betting odds and real game data, configure the APIs:
+
+#### 1. The Odds API Setup (Live Betting Odds)
+
+**Get Your Free API Key:**
+- Visit [theoddsapi.com](https://the-odds-api.com/)
+- Sign up for a free account
+- Get 500 API requests per month (free tier)
+- Copy your API key
+
+**Configure in `config.yaml`:**
+```yaml
+data_sources:
+  odds_api:
+    api_key: "YOUR_API_KEY_HERE"  # Paste your API key
+    use_mock: false  # Enable live data
+    cache_ttl_seconds: 60  # Cache odds for 60 seconds
+    rate_limit:
+      min_interval_seconds: 1  # Minimum 1 second between calls
+      max_requests_per_month: 500  # Free tier limit
+```
+
+**What You Get:**
+- ✅ Real-time odds from FanDuel, DraftKings, BetMGM, Caesars, PointsBet
+- ✅ Live line movements for arbitrage and sharp money detection
+- ✅ Actual closing lines for CLV tracking
+- ✅ Support for all 7 sports (NBA, NFL, MLB, NHL, Soccer, NCAAF, NCAAB)
+
+#### 2. ESPN API Setup (Game Data & Statistics)
+
+**No API Key Required!**
+
+The ESPN API is free and doesn't require registration:
+
+```yaml
+data_sources:
+  espn_api:
+    use_mock: false  # Enable live ESPN data
+    cache_ttl_seconds: 60  # Cache game data
+```
+
+**What You Get:**
+- ✅ Live game schedules and scores
+- ✅ Team records and standings
+- ✅ Real game times and venues
+- ✅ All 7 sports supported
+
+### 📊 API Usage Best Practices
+
+1. **Monitor Your Usage:**
+   - Free tier: 500 requests/month (~16 per day)
+   - Bot caches data to minimize calls
+   - Check remaining requests: `bot.odds_api_client.requests_made`
+
+2. **Optimize Cache Settings:**
+   ```yaml
+   odds_api:
+     cache_ttl_seconds: 60  # Longer cache = fewer API calls
+   ```
+
+3. **Rate Limiting:**
+   - Built-in rate limiting prevents API abuse
+   - Minimum 1 second between requests
+   - Automatic retry on errors
+
+4. **Paper Trading Safety:**
+   - Even with live data, all trades are paper only
+   - No real money at risk
+   - Perfect for testing strategies with real odds
+
+### 🔄 Switching Modes
+
+**Start with Mock Data:**
+```bash
+# config.yaml
+use_mock: true
+```
+
+**Upgrade to Live Data When Ready:**
+```bash
+# config.yaml
+api_key: "your_key_here"
+use_mock: false
+```
+
+**Monitor API Status:**
+```python
+# Check API connection status
+status = bot.odds_api_client.get_remaining_requests()
+print(f"API requests remaining: {status}")
+```
+
+---
+
 ## 📦 Installation
 
 ### Requirements
@@ -449,6 +563,77 @@ Action: BET Over 27.5
 1. **DO NOT deploy real money**
 2. Analyze what went wrong
 3. Improve and retest
+
+---
+
+## 🎨 Enhanced Dashboard
+
+The bot includes both a **terminal dashboard** and a **web dashboard** for monitoring performance.
+
+### Terminal Dashboard (Rich UI)
+
+The bot displays a real-time terminal dashboard with color-coded metrics:
+
+```bash
+python bot.py
+```
+
+**Features:**
+- 💰 **Bankroll Tracking** - Current balance, P&L, ROI
+- 📊 **Betting Statistics** - Win rate, total bets, pending bets
+- 📈 **CLV Analysis** - Real-time closing line value tracking
+- 🎯 **Strategy Performance** - ROI breakdown by strategy
+- 🎨 **Color Coding** - Green for wins, red for losses, yellow for warnings
+
+**Terminal UI powered by Rich library** - Automatically falls back to basic display if Rich is not available.
+
+### Web Dashboard
+
+Launch the web dashboard for a full-featured interface:
+
+```bash
+python start_dashboard.py
+# or
+cd dashboard && python app.py
+```
+
+Access at: `http://localhost:5000`
+
+**New Enhanced Endpoints:**
+
+| Endpoint | Description |
+|----------|-------------|
+| `/api/overview` | Dashboard summary with live data |
+| `/api/charts/pnl` | Cumulative P&L chart data |
+| `/api/charts/strategy` | Strategy performance comparison |
+| `/api/trades/history` | Paginated trade history |
+| `/api/export/trades` | CSV export of all trades |
+| `/api/bot/status` | Bot status and API connections |
+
+**Features:**
+- 📈 **Interactive Charts** - Visualize P&L and performance trends
+- 📊 **Trade History** - Filter, search, and export trades
+- 🎮 **Bot Control Panel** - Monitor API status and bot health
+- 📁 **CSV Export** - Download trade data for external analysis
+- 🔄 **Real-Time Updates** - Live data from running bot
+
+### API Integration Status
+
+Monitor your API connections through the dashboard:
+
+```json
+{
+  "odds_api": {
+    "connected": true,
+    "mode": "live",  // or "mock"
+    "requests_remaining": 450
+  },
+  "espn_api": {
+    "connected": true,
+    "mode": "live"
+  }
+}
+```
 
 ---
 
