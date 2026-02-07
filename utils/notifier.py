@@ -511,7 +511,7 @@ Bot: Sports Betting Bot (Paper Trading)
         """Alert when strategy status changes"""
         status = "ENABLED" if enabled else "DISABLED"
         title = f"Strategy {status}"
-        message = f"{strategy} + {sport}\nReason: {reason}"
+        message = f"{strategy} for {sport}\nReason: {reason}"
         return self.notify(title, message, event_type="status_change", priority="WARNING")
     
     def alert_error(self, error_type: str, details: str) -> Dict[str, bool]:

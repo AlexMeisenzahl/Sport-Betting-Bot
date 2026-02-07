@@ -312,8 +312,9 @@ class SportsBettingBot:
                 trigger_config = self.config.get('notification_triggers', 'high_value_opportunity', default={})
                 if trigger_config.get('enabled', True):
                     min_edge = trigger_config.get('min_edge_percent', 5.0)
-                    # Convert edge points to approximate percentage
-                    edge_pct = abs(value_bet['edge_points']) * 2.0  # Rough conversion
+                    # Convert spread edge to percentage: 1 point edge on a -110 line ≈ 2% EV
+                    # This is a simplified conversion; actual value depends on the specific line
+                    edge_pct = abs(value_bet['edge_points']) * 2.0
                     if edge_pct >= min_edge:
                         self.notifier.alert_opportunity_found(
                             sport,
