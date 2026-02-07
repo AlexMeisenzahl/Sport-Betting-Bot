@@ -36,12 +36,192 @@ Test betting strategies in **paper trading mode** for 30 days to identify what a
 - Caesars
 - PointsBet
 
+### Multi-Channel Notifications
+
+- **Desktop Notifications** - Cross-platform alerts for opportunities and events
+- **Email Notifications** - SMTP-based email alerts with validation
+- **Telegram Bot** - Push notifications via Telegram
+- **Sound Alerts** - Audio notifications for critical events
+- **Smart Features:**
+  - Granular event-type controls (trade, opportunity, error, summary, status changes)
+  - Rate limiting to prevent spam
+  - Quiet hours configuration
+  - Test notification system
+  - Email validation and credential security
+
 ### Analytics & Tracking
 
 - **Performance Tracker** - Strategy × Sport performance matrix
 - **CLV Tracker** - THE KEY METRIC for long-term profitability
 - **Risk Management** - Kelly Criterion, drawdown limits, position sizing
 - **Real-Time Dashboard** - Live P&L, opportunities, and recommendations
+
+---
+
+## 🔔 Notification Setup
+
+The bot includes a comprehensive multi-channel notification system to keep you informed about opportunities, trades, and critical events.
+
+### Quick Start (Desktop Notifications Only)
+
+Desktop notifications are enabled by default and require no configuration:
+
+```yaml
+notifications:
+  desktop:
+    enabled: true  # No setup needed!
+```
+
+### Setting Up Email Notifications
+
+1. **Copy the example config:**
+   ```bash
+   # The first time, copy config.example.yaml to config.yaml
+   cp config.example.yaml config.yaml
+   ```
+
+2. **Configure email settings in `config.yaml`:**
+   ```yaml
+   notifications:
+     email:
+       enabled: true
+       from_email: "your-email@gmail.com"
+       to_email: "your-email@gmail.com"
+       smtp_server: "smtp.gmail.com"
+       smtp_port: 587
+       password: "YOUR_APP_PASSWORD"  # ⚠️ Use app-specific password!
+   ```
+
+3. **Get an app-specific password (Gmail):**
+   - Go to Google Account settings → Security
+   - Enable 2-Factor Authentication if not already enabled
+   - Go to "App passwords"
+   - Generate a new app password for "Mail"
+   - Use this password in config.yaml
+
+4. **⚠️ SECURITY:** Never commit `config.yaml` to git (it's excluded via .gitignore)
+
+### Setting Up Telegram Notifications
+
+1. **Create a Telegram bot:**
+   - Open Telegram and search for @BotFather
+   - Send `/newbot` and follow instructions
+   - Save your bot token
+
+2. **Get your Chat ID:**
+   - Search for @userinfobot in Telegram
+   - Send `/start` to get your chat ID
+   - Or message your bot and check bot updates
+
+3. **Configure in `config.yaml`:**
+   ```yaml
+   notifications:
+     telegram:
+       enabled: true
+       bot_token: "123456789:ABCdefGHIjklMNOpqrsTUVwxyz"
+       chat_id: "987654321"
+   ```
+
+### Event Type Configuration
+
+Control which events trigger notifications per channel:
+
+```yaml
+notifications:
+  desktop:
+    enabled: true
+    event_types:
+      trade: true          # Trade executions
+      opportunity: true    # High-value opportunities
+      error: true         # Critical errors
+      summary: true       # Daily/weekly summaries
+      status_change: true # Strategy enable/disable
+  
+  email:
+    enabled: true
+    event_types:
+      trade: true
+      opportunity: false   # Often too frequent for email
+      error: true
+      summary: true
+      status_change: true
+```
+
+### Rate Limiting & Quiet Hours
+
+Prevent notification spam:
+
+```yaml
+notifications:
+  rate_limiting:
+    enabled: true
+    max_per_hour: 20        # Maximum 20 notifications per hour
+    max_per_minute: 5       # Maximum 5 per minute
+    cooldown_seconds: 30    # 30s between similar notifications
+  
+  quiet_hours:
+    enabled: true
+    start_time: "23:00"    # 11 PM
+    end_time: "07:00"      # 7 AM
+    timezone: "America/New_York"
+```
+
+### Test Your Notifications
+
+Enable test mode to verify your setup:
+
+```yaml
+notifications:
+  test_mode:
+    enabled: true
+    send_on_startup: true  # Test when bot starts
+```
+
+Or use Python:
+```python
+from utils.notifier import Notifier
+import yaml
+
+with open('config.yaml') as f:
+    config = yaml.safe_load(f)
+
+notifier = Notifier(config)
+results = notifier.test_notifications()
+print(results)  # Shows which channels succeeded
+```
+
+### Notification Triggers
+
+Configure when specific notifications are sent:
+
+```yaml
+notification_triggers:
+  high_value_opportunity:
+    enabled: true
+    min_edge_percent: 5.0      # Notify on opportunities with >5% edge
+    channels: ['desktop', 'telegram']
+  
+  daily_loss_limit:
+    enabled: true
+    threshold_percent: 80      # Notify at 80% of daily loss limit
+    channels: ['desktop', 'email', 'telegram']
+  
+  test_complete:
+    enabled: true
+    channels: ['desktop', 'email']
+```
+
+### Security Best Practices
+
+1. **Never commit credentials** - `config.yaml` is git-ignored
+2. **Use app-specific passwords** - Never use your main email password
+3. **Copy from example** - Start from `config.example.yaml`
+4. **Protect your config** - Keep `config.yaml` secure with proper file permissions
+
+```bash
+# Set secure permissions on your config
+chmod 600 config.yaml
+```
 
 ---
 
