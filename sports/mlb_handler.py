@@ -41,7 +41,7 @@ class MLBHandler:
                 games_data = self.sports_data.get_mlb_games()
                 
                 formatted_games = []
-                for game in games_data:
+                for idx, game in enumerate(games_data):
                     try:
                         competitors = game.get('competitions', [{}])[0].get('competitors', [])
                         if len(competitors) >= 2:
@@ -49,7 +49,7 @@ class MLBHandler:
                             away_team = competitors[1].get('team', {}).get('displayName', 'Unknown')
                             
                             formatted_games.append({
-                                'game_id': game.get('id', f'mlb_{len(formatted_games)}'),
+                                'game_id': game.get('id', f'mlb_{idx}'),
                                 'home': home_team,
                                 'away': away_team,
                                 'start_time': game.get('date', datetime.now().isoformat()),
