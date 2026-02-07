@@ -16,6 +16,7 @@ from utils.risk_management import RiskManager
 from sportsbooks.book_manager import SportsbookManager
 from analytics.performance_tracker import PerformanceTracker
 from analytics.clv_tracker import CLVTracker
+from notifier import Notifier
 
 # Import strategies
 from strategies.sports_arbitrage import SportsArbitrageStrategy
@@ -79,6 +80,16 @@ class SportsBettingBot:
         self.performance_tracker = PerformanceTracker()
         self.clv_tracker = CLVTracker()
         
+        # Initialize alerts list
+        self.alerts = []
+        
+        # Initialize notifier
+        try:
+            self.notifier = Notifier(self.config)
+        except Exception as e:
+            logger.warning(f"Failed to initialize notifier: {e}. Continuing without notifications.")
+            self.notifier = None
+        
         # Initialize strategies
         self.strategies = {}
         if self.config.is_strategy_enabled('arbitrage'):
@@ -122,6 +133,21 @@ class SportsBettingBot:
         self.day_count = 0
         
         logger.info(f"Initialized with {len(self.strategies)} strategies and {len(self.sport_handlers)} sports")
+    
+    def add_alert(self, message: str):
+        """
+        Add an alert to the alerts list with timestamp
+        
+        Args:
+            message: Alert message with emoji prefix
+        """
+        timestamp = datetime.now().strftime("%H:%M:%S")
+        alert_entry = f"[{timestamp}] {message}"
+        
+        # Add to alerts list (keep last 10)
+        self.alerts.append(alert_entry)
+        if len(self.alerts) > 10:
+            self.alerts = self.alerts[-10:]
     
     def run(self, duration_days: int = 30):
         """
@@ -232,6 +258,18 @@ class SportsBettingBot:
             # Place both sides (in reality, would place sequentially with checks)
             logger.info(f"  ARBITRAGE OPPORTUNITY: {opp['game']} - {opp['type']}")
             logger.info(f"    Expected profit: ${stakes['expected_profit']:.2f} ({opp['profit_percent']:.2f}%)")
+            
+            # Add alert to dashboard
+            game_short = opp.get('game', 'Unknown')[:30]  # Truncate long names
+            alert_msg = f"💰 {game_short}... ({opp['profit_percent']:.1f}% profit)"
+            self.add_alert(alert_msg)
+            
+            # Send notification
+            if self.notifier:
+                try:
+                    self.notifier.alert_opportunity_found(opp['game'], opp['profit_percent'])
+                except Exception as e:
+                    logger.debug(f"Notification failed: {e}")
     
     def _try_clv_model(self, sport: str, game: Dict):
         """Try CLV strategy with predictive model"""
@@ -396,6 +434,14 @@ class SportsBettingBot:
                 perf = self.performance_tracker.calculate_strategy_performance(strategy_name)
                 if perf['total_bets'] > 0:
                     print(f"   {strategy_name:20s}: {perf['total_bets']:3d} bets | ROI: {perf['roi']*100:+6.2f}%")
+        
+        # Alerts section
+        if self.alerts:
+            print(f"\n🚨 ALERTS (Last {len(self.alerts)})")
+            print("   " + "─" * 56)
+            for alert in self.alerts[-5:]:  # Show last 5 alerts
+                print(f"   {alert}")
+            print("   " + "─" * 56)
         
         print("\n" + "=" * 80)
     

@@ -116,9 +116,24 @@ testing:
   reallocation_frequency_days: 7
 
 # ===== NOTIFICATIONS =====
-notifications:
-  desktop: true
-  alert_on:
-    - "High value opportunity (>5% edge)"
-    - "Daily loss limit approaching"
-    - "30-day test complete"
+# Desktop notifications
+desktop_notifications:
+  enabled: true
+
+# Telegram notifications
+telegram:
+  enabled: false
+  bot_token: ""
+  chat_id: ""
+
+# Email notifications
+email:
+  enabled: false  # Disabled by default to avoid spam
+  from_email: ""
+  to_email: ""
+  smtp_server: "smtp.gmail.com"
+  smtp_port: 587
+  password: ""
+
+# Alert triggers
+alert_on_opportunities: true
