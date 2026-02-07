@@ -1,7 +1,7 @@
 """
 Main Sports Betting Bot
 Orchestrates all strategies, sports, and sportsbooks
-Provides real-time dashboard
+Provides real-time dashboard with Rich UI
 """
 
 import time
@@ -34,6 +34,18 @@ from sports.soccer_handler import SoccerHandler
 from sports.ncaaf_handler import NCAAFHandler
 from sports.ncaab_handler import NCAABHandler
 
+# Rich terminal UI
+try:
+    from rich.console import Console
+    from rich.layout import Layout
+    from rich.panel import Panel
+    from rich.table import Table
+    from rich.live import Live
+    from rich.text import Text
+    RICH_AVAILABLE = True
+except ImportError:
+    RICH_AVAILABLE = False
+
 
 logger = setup_logger("betting_bot")
 
@@ -45,7 +57,7 @@ class SportsBettingBot:
     Tests ALL strategies across ALL sports to identify what works
     """
     
-    def __init__(self, config_path: str = "config.yaml"):
+    def __init__(self, config_path: str = "config.yaml", use_rich: bool = True):
         """Initialize the betting bot"""
         logger.info("=" * 60)
         logger.info("SPORTS BETTING BOT STARTING")
@@ -53,6 +65,16 @@ class SportsBettingBot:
         
         # Load configuration
         self.config = ConfigLoader(config_path)
+        
+        # Rich UI setup
+        self.use_rich = use_rich and RICH_AVAILABLE
+        if self.use_rich:
+            self.console = Console()
+            logger.info("Rich terminal UI enabled")
+        else:
+            self.console = None
+            if use_rich and not RICH_AVAILABLE:
+                logger.warning("Rich library not available, using basic terminal output")
         
         # Initialize paper trading
         self.paper_trading = PaperTradingEngine(
@@ -439,6 +461,105 @@ class SportsBettingBot:
             # Track CLV
             self.clv_tracker.track_bet_clv(bet, closing_line)
     
+    def create_rich_dashboard(self) -> Layout:
+        """
+        Create Rich dashboard layout
+        
+        Returns:
+            Layout: Rich Layout object with configured sections
+        """
+        if not self.use_rich:
+            return None
+        
+        layout = Layout()
+        layout.split_column(
+            Layout(name="header", size=3),
+            Layout(name="main", ratio=1)
+        )
+        
+        layout["main"].split_row(
+            Layout(name="left", ratio=2),
+            Layout(name="right", ratio=1)
+        )
+        
+        layout["left"].split_column(
+            Layout(name="metrics", size=10),
+            Layout(name="strategies", ratio=1)
+        )
+        
+        return layout
+    
+    def update_rich_dashboard(self, layout: Layout):
+        """
+        Update Rich dashboard with live data
+        
+        Args:
+            layout: Rich Layout to update
+        """
+        if not self.use_rich or not layout:
+            return
+        
+        # Header
+        header_text = Text(f"SPORTS BETTING BOT - Day {self.day_count}", style="bold cyan", justify="center")
+        layout["header"].update(Panel(header_text, style="blue"))
+        
+        # Metrics section
+        stats = self.paper_trading.get_stats()
+        metrics_table = Table(show_header=True, header_style="bold magenta", expand=True)
+        metrics_table.add_column("Metric", style="cyan", width=20)
+        metrics_table.add_column("Value", style="green", width=20)
+        
+        # Bankroll metrics
+        profit_color = "green" if stats['total_profit'] >= 0 else "red"
+        metrics_table.add_row("💰 Current Bankroll", f"${stats['current_bankroll']:.2f}")
+        metrics_table.add_row("📊 Total Profit/Loss", f"[{profit_color}]${stats['total_profit']:.2f}[/{profit_color}]")
+        metrics_table.add_row("📈 ROI", f"[{profit_color}]{stats['roi']*100:+.2f}%[/{profit_color}]")
+        metrics_table.add_row("", "")  # Spacer
+        
+        # Bet statistics
+        metrics_table.add_row("🎲 Total Bets", str(stats['total_bets']))
+        metrics_table.add_row("✅ Wins / ❌ Losses", f"{stats['wins']} / {stats['losses']}")
+        win_rate_color = "green" if stats['win_rate'] > 0.524 else "yellow" if stats['win_rate'] > 0.5 else "red"
+        metrics_table.add_row("🎯 Win Rate", f"[{win_rate_color}]{stats['win_rate']*100:.1f}%[/{win_rate_color}]")
+        metrics_table.add_row("⏳ Pending Bets", str(stats['pending_bets']))
+        
+        layout["metrics"].update(Panel(metrics_table, title="Performance Metrics", border_style="cyan"))
+        
+        # CLV section (right panel)
+        if self.clv_tracker.clv_records:
+            avg_clv = self.clv_tracker.calculate_average_clv()
+            clv_table = Table(show_header=False, expand=True)
+            clv_table.add_column("", style="cyan")
+            clv_table.add_column("", style="white")
+            
+            clv_color = "green" if avg_clv > 0.5 else "red" if avg_clv < -0.5 else "yellow"
+            clv_status = "✓ BEATING THE LINE" if avg_clv > 0.5 else "✗ LOSING TO LINE" if avg_clv < -0.5 else "≈ NEUTRAL"
+            
+            clv_table.add_row("Average CLV", f"[{clv_color}]{avg_clv:+.2f} points[/{clv_color}]")
+            clv_table.add_row("Status", f"[{clv_color}]{clv_status}[/{clv_color}]")
+            clv_table.add_row("Total Tracked", str(len(self.clv_tracker.clv_records)))
+            
+            layout["right"].update(Panel(clv_table, title="📈 Closing Line Value", border_style="magenta"))
+        
+        # Strategy performance section
+        if stats['total_bets'] >= 5:
+            strategy_table = Table(show_header=True, header_style="bold yellow", expand=True)
+            strategy_table.add_column("Strategy", style="cyan", width=20)
+            strategy_table.add_column("Bets", justify="right", width=8)
+            strategy_table.add_column("ROI", justify="right", width=12)
+            
+            for strategy_name in ['arbitrage', 'clv_model', 'sharp_tracker', 'prop_analyzer', 'live_betting']:
+                perf = self.performance_tracker.calculate_strategy_performance(strategy_name)
+                if perf['total_bets'] > 0:
+                    roi_color = "green" if perf['roi'] > 0.02 else "red" if perf['roi'] < 0 else "yellow"
+                    strategy_table.add_row(
+                        strategy_name.replace('_', ' ').title(),
+                        str(perf['total_bets']),
+                        f"[{roi_color}]{perf['roi']*100:+.1f}%[/{roi_color}]"
+                    )
+            
+            layout["strategies"].update(Panel(strategy_table, title="🎯 Strategy Performance", border_style="yellow"))
+    
     def display_dashboard(self):
         """
         Real-time terminal dashboard showing:
@@ -449,6 +570,15 @@ class SportsBettingBot:
         - Current opportunities
         - CLV tracking
         """
+        # Use Rich dashboard if available
+        if self.use_rich:
+            layout = self.create_rich_dashboard()
+            self.update_rich_dashboard(layout)
+            self.console.print(layout)
+            self.console.print()  # Add spacing
+            return
+        
+        # Fallback to basic terminal output
         print("\n" + "=" * 80)
         print(f"SPORTS BETTING BOT DASHBOARD - Day {self.day_count}")
         print("=" * 80)
