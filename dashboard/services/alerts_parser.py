@@ -154,7 +154,8 @@ class AlertsParser:
             match = re.search(r'betting_bot_(\d{8})\.log', log_file.name)
             if match:
                 file_date = datetime.strptime(match.group(1), '%Y%m%d')
-                if file_date >= cutoff_date:
+                # Compare dates only to avoid timezone issues
+                if file_date.date() >= cutoff_date.date():
                     filtered_files.append(log_file)
         
         return filtered_files

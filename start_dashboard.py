@@ -15,14 +15,19 @@ from pathlib import Path
 
 def check_dependencies():
     """Check if required dependencies are installed"""
-    required_packages = ['flask', 'flask_cors', 'yaml']
+    # Map import names to package names
+    required_packages = {
+        'flask': 'flask',
+        'flask_cors': 'flask-cors',
+        'yaml': 'pyyaml'
+    }
     missing = []
     
-    for package in required_packages:
+    for import_name, package_name in required_packages.items():
         try:
-            __import__(package)
+            __import__(import_name)
         except ImportError:
-            missing.append(package)
+            missing.append(package_name)
     
     if missing:
         print("❌ Missing required packages:")

@@ -4,6 +4,10 @@
  * Handles all frontend interactivity, AJAX calls, and UI updates
  */
 
+// Constants
+const CONFIDENCE_HIGH_THRESHOLD = 70;
+const CONFIDENCE_MEDIUM_THRESHOLD = 40;
+
 // Global state
 let currentTab = 'alerts';
 let autoRefreshInterval = null;
@@ -108,8 +112,8 @@ function createAlertCard(alert) {
     const card = document.createElement('div');
     card.className = 'card alert-card cursor-pointer';
     
-    const confidenceClass = alert.confidence >= 70 ? 'confidence-high' : 
-                           alert.confidence >= 40 ? 'confidence-medium' : 
+    const confidenceClass = alert.confidence >= CONFIDENCE_HIGH_THRESHOLD ? 'confidence-high' : 
+                           alert.confidence >= CONFIDENCE_MEDIUM_THRESHOLD ? 'confidence-medium' : 
                            'confidence-low';
     
     const timestamp = new Date(alert.timestamp).toLocaleString();
@@ -198,8 +202,8 @@ function renderHistoryTable(alerts) {
         row.className = 'border-b border-slate-700 hover:bg-slate-700';
         
         const timestamp = new Date(alert.timestamp).toLocaleString();
-        const confidenceClass = alert.confidence >= 70 ? 'text-green-400' : 
-                               alert.confidence >= 40 ? 'text-yellow-400' : 
+        const confidenceClass = alert.confidence >= CONFIDENCE_HIGH_THRESHOLD ? 'text-green-400' : 
+                               alert.confidence >= CONFIDENCE_MEDIUM_THRESHOLD ? 'text-yellow-400' : 
                                'text-red-400';
         
         row.innerHTML = `

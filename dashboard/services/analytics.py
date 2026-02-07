@@ -40,7 +40,7 @@ class Analytics:
         alerts_today = len(today_alerts)
         
         # Average confidence
-        avg_confidence = sum(a.get('confidence', 0) for a in all_alerts) / max(len(all_alerts), 1)
+        avg_confidence = (sum(a.get('confidence', 0) for a in all_alerts) / len(all_alerts)) if all_alerts else 0
         
         # Most active sport
         sport_counts = Counter(a.get('sport', 'unknown') for a in all_alerts)
@@ -179,7 +179,7 @@ class Analytics:
         by_league = Counter(a.get('league', 'UNKNOWN') for a in alerts)
         by_type = Counter(a.get('type', 'general') for a in alerts)
         
-        avg_confidence = sum(a.get('confidence', 0) for a in alerts) / max(total, 1)
+        avg_confidence = (sum(a.get('confidence', 0) for a in alerts) / total) if total > 0 else 0
         
         return {
             'total_alerts': total,
