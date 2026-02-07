@@ -20,13 +20,16 @@ class SportsbookManager:
     Aggregates odds for comparison and arbitrage detection
     """
     
-    def __init__(self, enabled_books: Dict[str, bool], use_free_odds: bool = True):
+    def __init__(self, enabled_books: Dict[str, bool], use_free_odds: bool = True, 
+                 rate_limit_seconds: int = 5, cache_duration_minutes: int = 2):
         """
         Initialize sportsbook manager
         
         Args:
             enabled_books: Dict of book names to enabled status
             use_free_odds: If True, use free web scraping instead of APIs (default)
+            rate_limit_seconds: Seconds between scraping requests (default: 5)
+            cache_duration_minutes: How long to cache odds data (default: 2)
         """
         self.books = {}
         self.use_free_odds = use_free_odds
@@ -35,11 +38,12 @@ class SportsbookManager:
         if use_free_odds:
             try:
                 self.odds_scraper = OddsScraper(
-                    rate_limit_seconds=5,
-                    cache_duration_minutes=2
+                    rate_limit_seconds=rate_limit_seconds,
+                    cache_duration_minutes=cache_duration_minutes
                 )
                 self.espn_client = ESPNClient()
-                logger.info("Initialized FREE odds scraping - NO API KEYS REQUIRED")
+                logger.info(f"Initialized FREE odds scraping - NO API KEYS REQUIRED")
+                logger.info(f"Rate limit: {rate_limit_seconds}s, Cache: {cache_duration_minutes}min")
             except Exception as e:
                 logger.warning(f"Failed to initialize free odds scraper: {e}")
                 logger.warning("Falling back to mock sportsbook APIs")

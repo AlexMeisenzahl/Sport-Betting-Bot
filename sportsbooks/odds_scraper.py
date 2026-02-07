@@ -269,8 +269,22 @@ class OddsScraper:
         scraped from actual sportsbook comparison websites.
         """
         
+        # Sport-specific scoring ranges for realistic mock data
+        SPORT_TOTAL_RANGES = {
+            'nba': (190, 240),    # NBA games typically 190-240 total points
+            'ncaab': (130, 170),  # College basketball lower scoring
+            'nfl': (40, 55),      # NFL games typically 40-55 total points
+            'ncaaf': (45, 65),    # College football slightly higher
+            'mlb': (7, 11),       # MLB games typically 7-11 total runs
+            'nhl': (5, 7),        # NHL games typically 5-7 total goals
+            'soccer': (2, 4)      # Soccer typically 2-4 total goals
+        }
+        
         spread_line = random.uniform(-10, 10)
-        total_line = random.uniform(190, 240) if sport == 'nba' else random.uniform(40, 55)
+        
+        # Get sport-specific total range
+        total_range = SPORT_TOTAL_RANGES.get(sport, (40, 55))
+        total_line = random.uniform(total_range[0], total_range[1])
         
         # Generate odds for multiple sportsbooks
         books = ['fanduel', 'draftkings', 'betmgm', 'caesars', 'pointsbet']

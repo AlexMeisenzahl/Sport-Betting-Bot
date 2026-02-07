@@ -75,7 +75,15 @@ class SportsBettingBot:
             for book in ['fanduel', 'draftkings', 'betmgm', 'caesars', 'pointsbet']
         }
         use_free_odds = self.config.get('data_sources', 'odds_scraping', 'enabled', default=True)
-        self.sportsbook_manager = SportsbookManager(enabled_books, use_free_odds=use_free_odds)
+        rate_limit = self.config.get('data_sources', 'odds_scraping', 'rate_limit_seconds', default=5)
+        cache_duration = self.config.get('data_sources', 'odds_scraping', 'cache_duration_minutes', default=2)
+        
+        self.sportsbook_manager = SportsbookManager(
+            enabled_books,
+            use_free_odds=use_free_odds,
+            rate_limit_seconds=rate_limit,
+            cache_duration_minutes=cache_duration
+        )
         
         # Initialize analytics
         self.performance_tracker = PerformanceTracker()
