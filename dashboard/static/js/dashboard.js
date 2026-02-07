@@ -597,3 +597,291 @@ function showToast(message, type = 'info') {
         setTimeout(() => toast.remove(), 300);
     }, 3000);
 }
+
+// ============================================================================
+// ENHANCED DASHBOARD - OVERVIEW & CHARTS
+// ============================================================================
+
+/**
+ * BettingBotDashboard class for enhanced chart and analytics functionality
+ */
+class BettingBotDashboard {
+    constructor() {
+        this.charts = {};
+        this.refreshInterval = null;
+    }
+    
+    /**
+     * Initialize the enhanced dashboard
+     */
+    async init() {
+        try {
+            await this.loadOverview();
+            await this.loadCharts();
+            this.setupRefresh();
+        } catch (error) {
+            console.error('Error initializing enhanced dashboard:', error);
+        }
+    }
+    
+    /**
+     * Load overview statistics
+     */
+    async loadOverview() {
+        try {
+            const response = await fetch('/api/overview');
+            const result = await response.json();
+            
+            if (result.success) {
+                this.updateMetricCards(result.data);
+            }
+        } catch (error) {
+            console.error('Error loading overview:', error);
+        }
+    }
+    
+    /**
+     * Update metric cards with overview data
+     */
+    updateMetricCards(data) {
+        // Update bankroll metrics
+        if (data.bankroll) {
+            this.updateElement('current-bankroll', `$${data.bankroll.current.toFixed(2)}`);
+            this.updateElement('total-profit', `$${data.bankroll.profit.toFixed(2)}`);
+            this.updateElement('roi-percent', `${data.bankroll.roi.toFixed(1)}%`);
+        }
+        
+        // Update bet statistics
+        if (data.bets) {
+            this.updateElement('total-bets', data.bets.total);
+            this.updateElement('win-rate', `${data.bets.win_rate.toFixed(1)}%`);
+            this.updateElement('pending-bets', data.bets.pending);
+        }
+        
+        // Update today's stats
+        if (data.today) {
+            this.updateElement('today-trades', data.today.trades);
+            this.updateElement('today-profit', `$${data.today.profit.toFixed(2)}`);
+        }
+    }
+    
+    /**
+     * Load and render charts
+     */
+    async loadCharts() {
+        try {
+            await this.loadCumulativePnLChart();
+            await this.loadStrategyPerformanceChart();
+        } catch (error) {
+            console.error('Error loading charts:', error);
+        }
+    }
+    
+    /**
+     * Load and render cumulative P&L chart
+     */
+    async loadCumulativePnLChart() {
+        try {
+            const response = await fetch('/api/charts/cumulative-pnl?days=30');
+            const result = await response.json();
+            
+            if (result.success) {
+                this.renderLineChart('pnl-chart', result.data);
+            }
+        } catch (error) {
+            console.error('Error loading P&L chart:', error);
+        }
+    }
+    
+    /**
+     * Load and render strategy performance chart
+     */
+    async loadStrategyPerformanceChart() {
+        try {
+            const response = await fetch('/api/charts/strategy-performance');
+            const result = await response.json();
+            
+            if (result.success) {
+                this.renderBarChart('strategy-chart', result.data);
+            }
+        } catch (error) {
+            console.error('Error loading strategy chart:', error);
+        }
+    }
+    
+    /**
+     * Render a line chart using Chart.js
+     */
+    renderLineChart(canvasId, data) {
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) {
+            console.warn(`Canvas ${canvasId} not found`);
+            return;
+        }
+        
+        // Destroy existing chart if any
+        if (this.charts[canvasId]) {
+            this.charts[canvasId].destroy();
+        }
+        
+        const ctx = canvas.getContext('2d');
+        this.charts[canvasId] = new Chart(ctx, {
+            type: 'line',
+            data: data,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: false,
+                        ticks: {
+                            callback: function(value) {
+                                return '$' + value.toFixed(2);
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    /**
+     * Render a bar chart using Chart.js
+     */
+    renderBarChart(canvasId, data) {
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) {
+            console.warn(`Canvas ${canvasId} not found`);
+            return;
+        }
+        
+        // Destroy existing chart if any
+        if (this.charts[canvasId]) {
+            this.charts[canvasId].destroy();
+        }
+        
+        const ctx = canvas.getContext('2d');
+        this.charts[canvasId] = new Chart(ctx, {
+            type: 'bar',
+            data: data,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.parsed.y.toFixed(1) + '%';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return value + '%';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    /**
+     * Export trades to CSV
+     */
+    async exportTrades(filters = {}) {
+        try {
+            const response = await fetch('/api/export/trades', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(filters)
+            });
+            
+            if (response.ok) {
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `trades_export_${new Date().toISOString().split('T')[0]}.csv`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+                
+                showToast('Trades exported successfully', 'success');
+            } else {
+                throw new Error('Export failed');
+            }
+        } catch (error) {
+            console.error('Error exporting trades:', error);
+            showToast('Error exporting trades', 'error');
+        }
+    }
+    
+    /**
+     * Setup auto-refresh for charts and metrics
+     */
+    setupRefresh(intervalSeconds = 60) {
+        if (this.refreshInterval) {
+            clearInterval(this.refreshInterval);
+        }
+        
+        this.refreshInterval = setInterval(() => {
+            this.loadOverview();
+            this.loadCharts();
+        }, intervalSeconds * 1000);
+    }
+    
+    /**
+     * Helper to update element text content
+     */
+    updateElement(id, value) {
+        const element = document.getElementById(id);
+        if (element) {
+            element.textContent = value;
+        }
+    }
+    
+    /**
+     * Destroy all charts and cleanup
+     */
+    destroy() {
+        Object.values(this.charts).forEach(chart => chart.destroy());
+        this.charts = {};
+        
+        if (this.refreshInterval) {
+            clearInterval(this.refreshInterval);
+            this.refreshInterval = null;
+        }
+    }
+}
+
+// Create global dashboard instance
+const enhancedDashboard = new BettingBotDashboard();
+
+// Initialize enhanced dashboard if Chart.js is available
+if (typeof Chart !== 'undefined') {
+    document.addEventListener('DOMContentLoaded', function() {
+        enhancedDashboard.init();
+    });
+}
+

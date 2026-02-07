@@ -474,6 +474,206 @@ def internal_error(error):
 
 
 # ============================================================================
+# API ENDPOINTS - ENHANCED DASHBOARD
+# ============================================================================
+
+@app.route('/api/overview', methods=['GET'])
+def dashboard_overview():
+    """
+    Dashboard summary statistics for overview cards
+    
+    Returns:
+        JSON with bankroll, bet statistics, and performance metrics
+    """
+    try:
+        # Try to get real stats from paper trading if available
+        # For now, return mock data structure
+        overview_data = {
+            'bankroll': {
+                'current': 578.50,
+                'starting': 500.00,
+                'profit': 78.50,
+                'roi': 15.70
+            },
+            'bets': {
+                'total': 45,
+                'wins': 24,
+                'losses': 18,
+                'pending': 3,
+                'win_rate': 57.1
+            },
+            'today': {
+                'trades': 3,
+                'profit': 12.50,
+                'opportunities_found': 8
+            },
+            'strategies': {
+                'best_performer': 'clv_model',
+                'best_roi': 22.3,
+                'worst_performer': 'prop_analyzer',
+                'worst_roi': -5.2
+            }
+        }
+        
+        return jsonify({
+            'success': True,
+            'data': overview_data
+        })
+    
+    except Exception as e:
+        logger.error(f"Error fetching dashboard overview: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+@app.route('/api/charts/cumulative-pnl', methods=['GET'])
+def cumulative_pnl_chart():
+    """
+    Get data for cumulative P&L chart
+    
+    Query parameters:
+        - days: Number of days to show (default 30)
+    
+    Returns:
+        JSON with labels and data arrays for chart rendering
+    """
+    try:
+        days = request.args.get('days', 30, type=int)
+        
+        # Generate mock cumulative P&L data
+        # In production, fetch from paper trading history
+        labels = [f'Day {i+1}' for i in range(days)]
+        cumulative_pnl = []
+        current_pnl = 0
+        
+        # Simulate cumulative P&L with some volatility
+        import random
+        for i in range(days):
+            current_pnl += random.uniform(-5, 8)  # Positive expected value
+            cumulative_pnl.append(round(current_pnl, 2))
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'labels': labels,
+                'datasets': [{
+                    'label': 'Cumulative P&L ($)',
+                    'data': cumulative_pnl,
+                    'borderColor': 'rgb(75, 192, 192)',
+                    'backgroundColor': 'rgba(75, 192, 192, 0.2)',
+                    'fill': True
+                }]
+            }
+        })
+    
+    except Exception as e:
+        logger.error(f"Error fetching P&L chart data: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+@app.route('/api/charts/strategy-performance', methods=['GET'])
+def strategy_performance_chart():
+    """
+    Get strategy performance comparison data
+    
+    Returns:
+        JSON with strategy names and their ROI percentages
+    """
+    try:
+        # Mock strategy performance data
+        # In production, fetch from performance tracker
+        strategies = {
+            'labels': ['Arbitrage', 'CLV Model', 'Sharp Tracker', 'Props', 'Live Betting'],
+            'datasets': [{
+                'label': 'ROI (%)',
+                'data': [3.2, 18.5, 8.7, -2.1, 12.3],
+                'backgroundColor': [
+                    'rgba(75, 192, 192, 0.8)',
+                    'rgba(54, 162, 235, 0.8)',
+                    'rgba(255, 206, 86, 0.8)',
+                    'rgba(255, 99, 132, 0.8)',
+                    'rgba(153, 102, 255, 0.8)'
+                ]
+            }]
+        }
+        
+        return jsonify({
+            'success': True,
+            'data': strategies
+        })
+    
+    except Exception as e:
+        logger.error(f"Error fetching strategy performance: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+@app.route('/api/export/trades', methods=['POST'])
+def export_trades():
+    """
+    Export trades to CSV
+    
+    Body:
+        - start_date: Optional start date filter
+        - end_date: Optional end date filter
+        - sport: Optional sport filter
+    
+    Returns:
+        CSV file download
+    """
+    try:
+        import csv
+        from io import StringIO
+        from datetime import datetime
+        
+        # Get filter parameters
+        filters = request.get_json() or {}
+        
+        # Create CSV output
+        output = StringIO()
+        writer = csv.writer(output)
+        
+        # Write header
+        writer.writerow([
+            'Date', 'Sport', 'Game', 'Strategy', 'Bet Type', 
+            'Side', 'Odds', 'Stake', 'Result', 'Profit/Loss'
+        ])
+        
+        # Mock trade data
+        # In production, fetch from paper trading history
+        mock_trades = [
+            ['2026-02-01', 'NBA', 'Lakers vs Celtics', 'CLV Model', 'Spread', 'Lakers -5.5', '-110', 10.00, 'Win', 9.09],
+            ['2026-02-01', 'NFL', 'Chiefs vs Bills', 'Sharp Tracker', 'Moneyline', 'Chiefs', '+150', 15.00, 'Loss', -15.00],
+            ['2026-02-02', 'NBA', 'Warriors vs Nets', 'Arbitrage', 'Total', 'Over 225.5', '-105', 20.00, 'Win', 19.05],
+        ]
+        
+        for trade in mock_trades:
+            writer.writerow(trade)
+        
+        # Prepare response
+        output_value = output.getvalue()
+        
+        return output_value, 200, {
+            'Content-Type': 'text/csv',
+            'Content-Disposition': f'attachment; filename=trades_export_{datetime.now().strftime("%Y%m%d")}.csv'
+        }
+    
+    except Exception as e:
+        logger.error(f"Error exporting trades: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+# ============================================================================
 # MAIN
 # ============================================================================
 
