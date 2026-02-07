@@ -3,6 +3,10 @@
 # Core dependencies
 PyYAML>=6.0.1
 
+# Dashboard dependencies
+Flask>=3.0.0           # Web framework for dashboard
+Flask-CORS>=4.0.0      # CORS support for dashboard API
+
 # Notification system dependencies
 plyer>=2.1.0           # Cross-platform desktop notifications
 requests>=2.31.0       # HTTP requests for Telegram API
