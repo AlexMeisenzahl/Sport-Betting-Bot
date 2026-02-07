@@ -45,6 +45,11 @@ class SportsBettingBot:
     Tests ALL strategies across ALL sports to identify what works
     """
     
+    # Alert display constants
+    MAX_ALERTS_STORED = 10  # Maximum number of alerts to keep in memory
+    MAX_ALERTS_DISPLAYED = 5  # Maximum number of alerts to show in dashboard
+    MAX_ALERT_NAME_LENGTH = 30  # Maximum length for game/market names in alerts
+    
     def __init__(self, config_path: str = "config.yaml"):
         """Initialize the betting bot"""
         logger.info("=" * 60)
@@ -140,14 +145,18 @@ class SportsBettingBot:
         
         Args:
             message: Alert message with emoji prefix
+        
+        Note:
+            Keeps the last MAX_ALERTS_STORED alerts in memory.
+            Dashboard displays the last MAX_ALERTS_DISPLAYED alerts.
         """
         timestamp = datetime.now().strftime("%H:%M:%S")
         alert_entry = f"[{timestamp}] {message}"
         
-        # Add to alerts list (keep last 10)
+        # Add to alerts list (keep last MAX_ALERTS_STORED)
         self.alerts.append(alert_entry)
-        if len(self.alerts) > 10:
-            self.alerts = self.alerts[-10:]
+        if len(self.alerts) > self.MAX_ALERTS_STORED:
+            self.alerts = self.alerts[-self.MAX_ALERTS_STORED:]
     
     def run(self, duration_days: int = 30):
         """
@@ -260,7 +269,7 @@ class SportsBettingBot:
             logger.info(f"    Expected profit: ${stakes['expected_profit']:.2f} ({opp['profit_percent']:.2f}%)")
             
             # Add alert to dashboard
-            game_short = opp.get('game', 'Unknown')[:30]  # Truncate long names
+            game_short = opp.get('game', 'Unknown')[:self.MAX_ALERT_NAME_LENGTH]  # Truncate long names
             alert_msg = f"💰 {game_short}... ({opp['profit_percent']:.1f}% profit)"
             self.add_alert(alert_msg)
             
@@ -437,9 +446,9 @@ class SportsBettingBot:
         
         # Alerts section
         if self.alerts:
-            print(f"\n🚨 ALERTS (Last {len(self.alerts)})")
+            print(f"\n🚨 ALERTS (Last {min(len(self.alerts), self.MAX_ALERTS_DISPLAYED)})")
             print("   " + "─" * 56)
-            for alert in self.alerts[-5:]:  # Show last 5 alerts
+            for alert in self.alerts[-self.MAX_ALERTS_DISPLAYED:]:  # Show last MAX_ALERTS_DISPLAYED alerts
                 print(f"   {alert}")
             print("   " + "─" * 56)
         

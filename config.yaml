@@ -123,7 +123,7 @@ desktop_notifications:
 # Telegram notifications
 telegram:
   enabled: false
-  bot_token: ""
+  bot_token: ""  # SECURITY: Do NOT commit real tokens to version control! Use environment variables.
   chat_id: ""
 
 # Email notifications
@@ -133,7 +133,7 @@ email:
   to_email: ""
   smtp_server: "smtp.gmail.com"
   smtp_port: 587
-  password: ""
+  password: ""  # SECURITY: Do NOT commit passwords to version control! Use environment variables.
 
 # Alert triggers
 alert_on_opportunities: true

@@ -202,14 +202,19 @@ class Notifier:
                 )
             elif hasattr(self, 'desktop_method'):
                 if self.desktop_method == "osascript":
-                    # macOS notification
+                    # macOS notification - properly escape strings to prevent injection
                     import subprocess
+                    # Use list form to avoid shell injection
                     script = f'display notification "{message}" with title "{title}"'
-                    subprocess.run(['osascript', '-e', script])
+                    # Escape quotes in the strings
+                    safe_message = message.replace('"', '\\"').replace('$', '\\$')
+                    safe_title = title.replace('"', '\\"').replace('$', '\\$')
+                    script = f'display notification "{safe_message}" with title "{safe_title}"'
+                    subprocess.run(['osascript', '-e', script], check=False)
                 elif self.desktop_method == "notify-send":
-                    # Linux notification
+                    # Linux notification - use list arguments to avoid shell injection
                     import subprocess
-                    subprocess.run(['notify-send', title, message])
+                    subprocess.run(['notify-send', title, message], check=False)
                 elif self.desktop_method == "win10toast":
                     # Windows notification
                     self.toast_notifier.show_toast(title, message, duration=10)
@@ -240,7 +245,7 @@ class Notifier:
             if response.status_code == 200:
                 logger.debug(f"Telegram notification sent: {title}")
             else:
-                logger.debug(f"Telegram notification failed: {response.status_code}")
+                logger.debug(f"Telegram notification failed: {response.status_code} - {response.text}")
         except Exception as e:
             logger.debug(f"Failed to send Telegram notification: {e}")
     
