@@ -90,17 +90,65 @@ risk_management:
   kelly_fraction: 0.25
 
 # ===== DATA SOURCES =====
+# Hybrid system supporting free scraping AND paid APIs with automatic fallback
 data_sources:
-  odds_api:
-    provider: "the-odds-api"
-    api_key: ""  # Optional for paper trading
-    update_frequency_seconds: 10
+  # Priority order: Try sources in this order (first available wins)
+  priority_order:
+    - "odds_scraping"    # Free web scraping (default, no setup required)
+    - "the_odds_api"     # Paid API (fallback, requires API key)
+    - "espn_api"         # Free stats (supplementary)
+  
+  # Free Web Scraping (Enabled by default, no API key required)
+  odds_scraping:
+    enabled: true
+    sources:
+      - "oddsportal"     # OddsPortal.com
+      - "oddschecker"    # OddsChecker.com
+    rate_limiting:
+      enabled: true
+      requests_per_minute: 10
+      delay_between_requests: 6  # 6 seconds = 10 requests/minute
+    cache:
+      enabled: true
+      ttl_minutes: 5     # Cache odds for 5 minutes
+    user_agents:
+      rotate: true       # Rotate user agents to avoid blocks
+  
+  # The Odds API (Paid, disabled by default)
+  # Get API key at: https://the-odds-api.com/ (500 requests/month free tier)
+  the_odds_api:
+    enabled: false       # Disabled by default (requires API key)
+    api_key: ""          # Add your API key here to enable
+    regions: ["us"]
+    markets: ["h2h", "spreads", "totals"]
+    odds_format: "american"
+    rate_limit:
+      requests_per_month: 500   # Free tier limit
+      requests_per_day: 25      # Self-imposed daily limit
+      min_interval_seconds: 1   # Minimum 1 second between calls
+    cache:
+      enabled: true
+      ttl_minutes: 1     # Cache for 1 minute (fresher data for paid API)
+    # Enabled bookmakers (must match The Odds API keys)
+    enabled_bookmakers:
+      - fanduel
+      - draftkings
+      - betmgm
+      - williamhill_us   # Caesars
+      - pointsbetus
+  
+  # ESPN API (Free stats, no API key needed)
+  espn_api:
+    enabled: true
+    use_mock: true       # Set to false to use real ESPN API
+    cache_ttl_minutes: 15  # Cache game data for 15 minutes
     
+  # Legacy stats API configuration
   stats_api:
-    nba: "nba_api"
-    nfl: "nfl_data_py"
-    mlb: "pybaseball"
-    nhl: "nhl_api"
+    nba: "espn"
+    nfl: "espn"
+    mlb: "espn"
+    nhl: "espn"
 
 # ===== TESTING =====
 testing:

@@ -4,6 +4,11 @@
 PyYAML>=6.0.1
 requests>=2.31.0       # HTTP requests for API calls
 
+# Web Scraping (for free odds data)
+beautifulsoup4>=4.11.0 # HTML parsing
+lxml>=4.9.0            # Fast XML/HTML parser
+fake-useragent>=1.4.0  # User agent rotation
+
 # Dashboard dependencies
 Flask>=3.0.0           # Web framework for dashboard
 Flask-CORS>=4.0.0      # CORS support for dashboard API

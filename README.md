@@ -225,65 +225,125 @@ chmod 600 config.yaml
 
 ---
 
-## 🔌 Live API Integration
+## 📊 Data Sources - Hybrid System
 
-The bot now supports live sports betting data through **The Odds API** and **ESPN API** for real-time odds and game information.
+The bot supports **multiple data sources** with automatic fallback - start completely free, upgrade when ready!
 
-### 🎯 Quick Start - Paper Trading (No API Keys Needed)
+### 🎯 How It Works: Priority-Based Fallback
 
-By default, the bot runs in **mock mode** for safe paper trading:
+The bot tries data sources in order of priority. If one fails, it automatically tries the next:
+
+1. **Free Web Scraping** (default) → 2. **The Odds API** (paid, optional) → 3. **ESPN API** (free stats)
 
 ```yaml
 data_sources:
-  odds_api:
-    use_mock: true  # Uses simulated data
-  espn_api:
-    use_mock: true  # Uses simulated data
+  priority_order:
+    - "odds_scraping"    # Try free scraping first
+    - "the_odds_api"     # Fall back to paid API if scraping fails
+    - "espn_api"         # Supplementary stats
 ```
 
-No setup required! Just run the bot and it will use realistic mock data.
+---
 
-### 🚀 Upgrade to Live Data (Optional)
+### 🆓 Option 1: Free Web Scraping (Default)
 
-For live betting odds and real game data, configure the APIs:
+**Zero setup required!** The bot automatically scrapes odds from free public websites.
 
-#### 1. The Odds API Setup (Live Betting Odds)
+#### ✅ Pros:
+- ✅ **Completely free** - No API keys or subscriptions needed
+- ✅ **Works out of the box** - Default configuration, just run the bot
+- ✅ **Multiple sources** - OddsPortal + OddsChecker for reliability
+- ✅ **All sportsbooks** - FanDuel, DraftKings, BetMGM, Caesars, PointsBet
+- ✅ **Built-in rate limiting** - Respects website limits (10 req/min default)
+- ✅ **Smart caching** - 5-minute cache reduces requests
 
-**Get Your Free API Key:**
+#### ⚠️ Cons:
+- ⚠️ Slower than paid APIs (rate limiting required)
+- ⚠️ May break if websites change their HTML structure
+- ⚠️ Slightly less fresh data (5-minute cache vs 1-minute for paid)
+
+#### Configuration:
+
+```yaml
+data_sources:
+  odds_scraping:
+    enabled: true  # ✓ Enabled by default
+    sources:
+      - "oddsportal"     # OddsPortal.com
+      - "oddschecker"    # OddsChecker.com
+    rate_limiting:
+      enabled: true
+      requests_per_minute: 10
+      delay_between_requests: 6  # 6 seconds between requests
+    cache:
+      enabled: true
+      ttl_minutes: 5     # Cache odds for 5 minutes
+    user_agents:
+      rotate: true       # Rotate user agents to avoid blocks
+```
+
+**No setup required!** This is the default configuration.
+
+---
+
+### 💰 Option 2: The Odds API (Paid, Fallback)
+
+**Optional paid API** for faster, more reliable odds data. The bot automatically falls back to this if scraping fails.
+
+#### ✅ Pros:
+- ✅ **Faster** - Direct API access, no rate limiting delays
+- ✅ **More reliable** - Professional API, no website changes
+- ✅ **Fresher data** - 1-minute cache vs 5-minute for scraping
+- ✅ **Official odds** - Direct from sportsbooks' data feeds
+- ✅ **Free tier available** - 500 requests/month (~16/day)
+
+#### ⚠️ Cons:
+- ⚠️ Requires API key setup
+- ⚠️ Free tier limited to 500 requests/month
+- ⚠️ Paid plans needed for high-frequency use
+
+#### Setup Instructions:
+
+**1. Get Your Free API Key:**
 - Visit [theoddsapi.com](https://the-odds-api.com/)
 - Sign up for a free account
 - Get 500 API requests per month (free tier)
 - Copy your API key
 
-**Configure in `config.yaml`:**
+**2. Add to `config.yaml`:**
 ```yaml
 data_sources:
-  odds_api:
-    api_key: "YOUR_API_KEY_HERE"  # Paste your API key
-    use_mock: false  # Enable live data
-    cache_ttl_seconds: 60  # Cache odds for 60 seconds
+  the_odds_api:
+    enabled: true              # Enable The Odds API
+    api_key: "YOUR_KEY_HERE"   # Paste your API key
+    regions: ["us"]
+    markets: ["h2h", "spreads", "totals"]
+    odds_format: "american"
     rate_limit:
-      min_interval_seconds: 1  # Minimum 1 second between calls
-      max_requests_per_month: 500  # Free tier limit
+      requests_per_month: 500   # Free tier limit
+      requests_per_day: 25      # Self-imposed daily limit
+      min_interval_seconds: 1   # Minimum 1 second between calls
+    cache:
+      enabled: true
+      ttl_minutes: 1     # Cache for 1 minute (fresher data)
 ```
 
-**What You Get:**
-- ✅ Real-time odds from FanDuel, DraftKings, BetMGM, Caesars, PointsBet
-- ✅ Live line movements for arbitrage and sharp money detection
-- ✅ Actual closing lines for CLV tracking
-- ✅ Support for all 7 sports (NBA, NFL, MLB, NHL, Soccer, NCAAF, NCAAB)
+**3. Restart the bot** - It will now use The Odds API as fallback!
 
-#### 2. ESPN API Setup (Game Data & Statistics)
+---
 
-**No API Key Required!**
+### 📈 Option 3: ESPN API (Free Stats)
 
-The ESPN API is free and doesn't require registration:
+**Supplementary data source** for game schedules, scores, and team statistics. Always free!
+
+#### Configuration:
 
 ```yaml
 data_sources:
   espn_api:
-    use_mock: false  # Enable live ESPN data
-    cache_ttl_seconds: 60  # Cache game data
+    enabled: true
+    use_mock: true       # Set to false for real ESPN data
+    cache_ttl_minutes: 15
 ```
 
 **What You Get:**
@@ -291,51 +351,122 @@ data_sources:
 - ✅ Team records and standings
 - ✅ Real game times and venues
 - ✅ All 7 sports supported
+- ✅ No API key required!
 
-### 📊 API Usage Best Practices
+---
 
-1. **Monitor Your Usage:**
-   - Free tier: 500 requests/month (~16 per day)
-   - Bot caches data to minimize calls
-   - Check remaining requests: `bot.odds_api_client.requests_made`
+### 🎮 Recommended Configurations
 
-2. **Optimize Cache Settings:**
-   ```yaml
-   odds_api:
-     cache_ttl_seconds: 60  # Longer cache = fewer API calls
-   ```
+#### For Learning / Testing (Default):
+```yaml
+data_sources:
+  priority_order:
+    - "odds_scraping"    # Free scraping only
+    - "espn_api"
+  
+  odds_scraping:
+    enabled: true        # ✓ Free scraping
+  
+  the_odds_api:
+    enabled: false       # ✗ No API key needed
+    api_key: ""
+```
 
-3. **Rate Limiting:**
-   - Built-in rate limiting prevents API abuse
-   - Minimum 1 second between requests
-   - Automatic retry on errors
+**Best for:** Getting started, learning the bot, testing strategies without any setup.
 
-4. **Paper Trading Safety:**
-   - Even with live data, all trades are paper only
-   - No real money at risk
-   - Perfect for testing strategies with real odds
+#### For Production (Paid API First):
+```yaml
+data_sources:
+  priority_order:
+    - "the_odds_api"     # Try paid API first
+    - "odds_scraping"    # Fall back to free scraping
+    - "espn_api"
+  
+  odds_scraping:
+    enabled: true        # ✓ Backup free scraping
+  
+  the_odds_api:
+    enabled: true        # ✓ Primary paid API
+    api_key: "YOUR_KEY"
+```
 
-### 🔄 Switching Modes
+**Best for:** Live trading with fastest, most reliable data, with free scraping as backup.
 
-**Start with Mock Data:**
+#### For Hybrid (Best of Both):
+```yaml
+data_sources:
+  priority_order:
+    - "odds_scraping"    # Try free first
+    - "the_odds_api"     # Fall back to paid
+    - "espn_api"
+  
+  odds_scraping:
+    enabled: true        # ✓ Free primary
+  
+  the_odds_api:
+    enabled: true        # ✓ Paid fallback
+    api_key: "YOUR_KEY"
+```
+
+**Best for:** Start free, only use paid API when scraping fails. Maximize free tier, minimize costs.
+
+---
+
+### 🔍 Monitoring Data Sources
+
+The bot shows which data source is being used in the dashboard and logs:
+
+**Dashboard Display:**
+```
+📊 DATA SOURCES
+  Priority: odds_scraping → the_odds_api → espn_api
+  ✓ Free Scraping: oddsportal, oddschecker
+  ✗ The Odds API: Disabled
+```
+
+**Log Messages:**
+```
+✓ Got odds from free scraping for game_123
+✓ Got odds from The Odds API for game_456 (fallback)
+```
+
+---
+
+### 📦 Installation
+
+**Free Scraping (Default):**
 ```bash
-# config.yaml
-use_mock: true
+pip install beautifulsoup4 lxml fake-useragent
 ```
 
-**Upgrade to Live Data When Ready:**
+**All Dependencies:**
 ```bash
-# config.yaml
-api_key: "your_key_here"
-use_mock: false
+pip install -r requirements.txt
 ```
 
-**Monitor API Status:**
-```python
-# Check API connection status
-status = bot.odds_api_client.get_remaining_requests()
-print(f"API requests remaining: {status}")
+---
+
+### 🆘 Troubleshooting
+
+**Issue: "ImportError: No module named 'bs4'"**
+```bash
+pip install beautifulsoup4 lxml
 ```
+
+**Issue: "Failed to initialize scrapers"**
+- Install dependencies: `pip install beautifulsoup4 lxml fake-useragent`
+- Bot will automatically fall back to The Odds API if available
+
+**Issue: "No odds available"**
+- Check internet connection
+- Verify at least one data source is enabled
+- Check logs for specific error messages
+
+**Issue: "API quota exceeded"**
+- You've used all 500 free requests this month
+- Enable free scraping as primary: `priority_order: ["odds_scraping", "the_odds_api"]`
+- Wait for next month's quota reset
+- Or upgrade to paid API plan
 
 ---
 
