@@ -137,9 +137,17 @@ class OddsCheckerScraper(BaseScraper):
         odds = {}
         
         for book in sportsbooks:
-            # Generate realistic American odds (slightly different from OddsPortal)
+            # Generate realistic American odds
+            # For moneyline: one team is favorite (negative), other is underdog (positive)
             home_ml = random.randint(-180, +180)
-            away_ml = -home_ml if home_ml > 0 else -home_ml + random.randint(-15, 15)
+            
+            # Calculate away odds to balance the book (account for vigorish)
+            if home_ml > 0:  # Home is underdog
+                # Away is favorite - should be negative
+                away_ml = random.randint(-230, -105)
+            else:  # Home is favorite (negative odds)
+                # Away is underdog - should be positive
+                away_ml = random.randint(+105, +230)
             
             odds[book] = {
                 'moneyline': {

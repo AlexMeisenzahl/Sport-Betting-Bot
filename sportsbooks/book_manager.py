@@ -186,7 +186,9 @@ class SportsbookManager:
             logger.info(f"  Scrapers: {', '.join(self.scrapers.keys())}")
         logger.info(f"The Odds API: {'✓ Enabled' if self.odds_api_client else '✗ Disabled'}")
         if self.odds_api_client:
-            mode = "MOCK" if getattr(self.odds_api_client, 'use_mock', True) else "LIVE"
+            # Get mode explicitly
+            use_mock = getattr(self.odds_api_client, 'use_mock', None)
+            mode = "MOCK" if use_mock is None or use_mock else "LIVE"
             logger.info(f"  Mode: {mode}")
         logger.info("=" * 60)
     
@@ -383,16 +385,18 @@ class SportsbookManager:
         Returns:
             Dict of game -> sportsbook -> odds
         """
-        if self.odds_api_client and not getattr(self.odds_api_client, 'use_mock', True):
-            try:
-                odds_data = self.odds_api_client.get_odds(sport)
-                return self.odds_api_client.format_odds_for_strategy(odds_data)
-            except Exception as e:
-                logger.error(f"Error fetching all games odds: {e}")
-                return {}
-        else:
-            # For scrapers and mock mode, return empty (need individual calls)
-            return {}
+        if self.odds_api_client:
+            use_mock = getattr(self.odds_api_client, 'use_mock', None)
+            # Only use API for all games if it's in live mode
+            if use_mock is not None and not use_mock:
+                try:
+                    odds_data = self.odds_api_client.get_odds(sport)
+                    return self.odds_api_client.format_odds_for_strategy(odds_data)
+                except Exception as e:
+                    logger.error(f"Error fetching all games odds: {e}")
+                    return {}
+        # For scrapers and mock mode, return empty (need individual calls)
+        return {}
     
     def find_best_odds(self, sport: str, game: str, bet_type: str, side: str) -> Optional[tuple]:
         """
@@ -431,6 +435,23 @@ class SportsbookManager:
         
         return None
     
+    def _get_api_mode(self) -> str:
+        """
+        Get the mode (LIVE or MOCK) of the API client
+        
+        Returns:
+            'LIVE' if API is in live mode, 'MOCK' otherwise
+        """
+        if not self.odds_api_client:
+            return 'MOCK'
+        
+        use_mock = getattr(self.odds_api_client, 'use_mock', None)
+        if use_mock is None:
+            # Attribute doesn't exist, assume MOCK for safety
+            return 'MOCK'
+        
+        return 'MOCK' if use_mock else 'LIVE'
+    
     def get_data_source_status(self) -> Dict:
         """
         Get status of all data sources
@@ -446,7 +467,7 @@ class SportsbookManager:
             },
             'the_odds_api': {
                 'enabled': self.odds_api_client is not None,
-                'mode': 'LIVE' if self.odds_api_client and not getattr(self.odds_api_client, 'use_mock', True) else 'MOCK'
+                'mode': self._get_api_mode()
             },
             'mock_apis': {
                 'enabled': bool(self.books),
@@ -490,13 +511,16 @@ class SportsbookManager:
             Status dict with connection info
         """
         # Check if using API
-        if self.odds_api_client and not getattr(self.odds_api_client, 'use_mock', True):
-            return {
-                'connected': True,
-                'mode': 'live_api',
-                'book': book_name,
-                'enabled': book_name in self.enabled_books and self.enabled_books[book_name]
-            }
+        if self.odds_api_client:
+            # Explicitly check if the attribute exists and get its value
+            use_mock = getattr(self.odds_api_client, 'use_mock', None)
+            if use_mock is not None and not use_mock:
+                return {
+                    'connected': True,
+                    'mode': 'live_api',
+                    'book': book_name,
+                    'enabled': book_name in self.enabled_books and self.enabled_books[book_name]
+                }
         
         # Check scrapers
         if self.scrapers:
@@ -519,7 +543,8 @@ class SportsbookManager:
     
     def get_available_books(self) -> List[str]:
         """Get list of available sportsbook names"""
-        if self.odds_api_client and not getattr(self.odds_api_client, 'use_mock', True):
+        # Check if using live API
+        if self.odds_api_client and self._get_api_mode() == 'LIVE':
             return [book for book, enabled in self.enabled_books.items() if enabled]
         elif self.scrapers:
             # Scrapers typically support major books
