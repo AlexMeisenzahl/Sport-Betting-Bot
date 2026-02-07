@@ -8,17 +8,18 @@ Test betting strategies in **paper trading mode** for 30 days to identify what a
 
 ---
 
-## 🆓 **NEW: Free Odds Integration - NO API KEYS REQUIRED**
+## 🆓 **NEW: Free Odds Integration Framework - NO API KEYS REQUIRED**
 
-This bot now includes **100% FREE** live odds scraping from public sources:
+This bot now includes a **FREE** odds scraping framework:
 
 - ✅ **$0/month** - No API subscriptions needed
-- ✅ **Real-time odds** from 100+ sportsbooks via web scraping
-- ✅ **ESPN free API** for game schedules and stats
-- ✅ **Multiple sportsbooks** - FanDuel, DraftKings, BetMGM, Caesars, PointsBet
+- ✅ **Proof-of-concept architecture** for web scraping odds from public sources
+- ✅ **ESPN free API** for game schedules and stats (fully functional)
+- ✅ **Modular design** ready for production HTML parsing implementation
 - ✅ **All 7 sports** covered - NBA, NFL, MLB, NHL, Soccer, NCAAF, NCAAB
+- 🔨 **Requires HTML parsing implementation** for production use with real odds
 
-See [FREE_ODDS_INTEGRATION.md](FREE_ODDS_INTEGRATION.md) for complete documentation.
+**Note:** Currently uses mock data to demonstrate the architecture. See [FREE_ODDS_INTEGRATION.md](FREE_ODDS_INTEGRATION.md) for implementation requirements.
 
 ---
 

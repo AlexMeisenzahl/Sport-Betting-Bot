@@ -1,17 +1,34 @@
 # Free Odds Scraping Integration
 
+## ⚠️ IMPORTANT: Proof-of-Concept Implementation
+
+**This is a proof-of-concept that demonstrates the architecture and API design.**
+
+The current implementation returns **mock data** to demonstrate the system structure. Before using in production:
+
+1. ✅ **Implement actual HTML parsing** - Add BeautifulSoup parsers for OddsPortal/OddsChecker
+2. ✅ **Test with real websites** - Verify parsing works with actual HTML structures
+3. ✅ **Legal compliance** - Review and comply with website terms of service
+4. ✅ **Monitoring** - Add alerts for HTML structure changes
+5. ✅ **Error handling** - Enhance robustness for production use
+
+See "Production Considerations" section below for detailed implementation requirements.
+
+---
+
 ## Overview
 
-This integration provides **100% FREE** access to live sports betting odds from multiple sportsbooks without requiring any API keys or subscriptions.
+This integration provides a **FREE** framework for accessing live sports betting odds from public sources without requiring API keys or subscriptions.
 
 ## Features
 
-✅ **NO API KEYS REQUIRED** - Completely free to use  
-✅ **Real-Time Odds** - Live odds from 100+ sportsbooks  
+✅ **NO API KEYS REQUIRED** - Completely free architecture  
+✅ **Modular Design** - Ready for production HTML parsing  
+✅ **Rate Limiting** - Respectful scraping built-in  
 ✅ **Multiple Sports** - NBA, NFL, MLB, NHL, Soccer, NCAAF, NCAAB  
 ✅ **Multiple Sportsbooks** - FanDuel, DraftKings, BetMGM, Caesars, PointsBet  
 ✅ **ESPN Integration** - Free public API for schedules and stats  
-✅ **Respectful Scraping** - Built-in rate limiting and caching  
+🔨 **HTML Parsing** - Requires implementation for production use (currently mock data)  
 
 ## Architecture
 
@@ -192,6 +209,15 @@ client.close()
 ✅ Respectful rate limits  
 ✅ Educational/personal use  
 ✅ No terms of service violations  
+
+**⚠️ LEGAL DISCLAIMER:**
+- Web scraping legality varies by jurisdiction and website terms of service
+- Users are responsible for verifying compliance with applicable laws in their region
+- Users must review and comply with the terms of service of any websites they scrape
+- This implementation is provided for educational purposes only
+- The authors are not responsible for any misuse or legal issues arising from use
+- Always consult with legal counsel before deploying web scraping in production
+- Consider using official APIs or data providers when available for commercial use  
 
 ### Production Considerations
 

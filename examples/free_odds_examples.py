@@ -6,7 +6,10 @@ NO API KEYS REQUIRED!
 """
 
 import sys
-sys.path.insert(0, '/home/runner/work/Sport-Betting-Bot/Sport-Betting-Bot')
+import os
+
+# Add parent directory to path for imports
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from sportsbooks.book_manager import SportsbookManager
 from sportsbooks.espn_client import ESPNClient

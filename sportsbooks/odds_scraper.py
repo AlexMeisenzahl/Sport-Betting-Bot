@@ -6,6 +6,7 @@ Scrapes OddsPortal and OddsChecker for real-time odds from multiple sportsbooks
 from bs4 import BeautifulSoup
 from typing import Dict, List, Optional
 import re
+import random
 from utils.web_scraper import WebScraper
 from utils.logger import setup_logger
 
@@ -79,16 +80,20 @@ class OddsScraper:
         """
         Scrape odds from OddsPortal
         
-        Note: This is a simplified implementation. In production, you would:
-        1. Build proper URLs based on sport and game
-        2. Parse the actual HTML structure
-        3. Handle pagination and dynamic content
+        IMPORTANT: This is a PROOF-OF-CONCEPT implementation that returns
+        mock data for demonstration purposes. In production, you must:
         
-        For now, returns mock data to demonstrate structure
+        1. Inspect OddsPortal's actual HTML structure
+        2. Implement proper HTML parsing logic
+        3. Handle dynamic content and pagination
+        4. Test thoroughly with real data
+        5. Ensure compliance with OddsPortal's terms of service
+        
+        The mock data demonstrates the expected data structure and API.
         """
         logger.info(f"Fetching odds from OddsPortal for {sport} game {game_id}")
         
-        # In production, construct proper OddsPortal URL
+        # PRODUCTION IMPLEMENTATION WOULD BE:
         # url = f"https://www.oddsportal.com/{self._get_sport_path(sport)}/{game_id}"
         # html = self.scraper.fetch_page(url)
         # if not html:
@@ -98,7 +103,7 @@ class OddsScraper:
         # return self._parse_oddsportal_html(soup)
         
         # For demonstration, return structured mock data
-        # In production, this would parse actual HTML
+        # Replace this with actual scraping in production
         return self._generate_mock_odds(sport)
     
     def _fetch_from_oddschecker(self, sport: str, game_id: str) -> Optional[Dict[str, Dict]]:
@@ -256,10 +261,13 @@ class OddsScraper:
         """
         Generate mock odds for demonstration
         
-        In production, this would be replaced with actual scraping
-        Returns realistic odds structure
+        PROOF-OF-CONCEPT: This returns realistic mock data to demonstrate
+        the expected data structure and API design. In production, this
+        should be replaced with actual web scraping implementation.
+        
+        Returns realistic odds structure that matches what would be
+        scraped from actual sportsbook comparison websites.
         """
-        import random
         
         spread_line = random.uniform(-10, 10)
         total_line = random.uniform(190, 240) if sport == 'nba' else random.uniform(40, 55)
