@@ -14,6 +14,15 @@ rich>=13.7.0           # Rich terminal formatting and live displays
 # Notification system dependencies
 plyer>=2.1.0           # Cross-platform desktop notifications
 
+# Web scraping dependencies (for free odds sources)
+beautifulsoup4>=4.11.0  # HTML parsing
+lxml>=4.9.0            # XML/HTML parser
+fake-useragent>=1.4.0  # User agent rotation
+
+# Testing dependencies
+pytest>=7.0.0          # Testing framework
+pytest-mock>=3.10.0    # Mocking support for pytest
+
 # Optional notification enhancements
 # win10toast>=0.9      # Windows 10 toast notifications (Windows only)
 
