@@ -131,12 +131,12 @@ notifications:
   # Email notifications via SMTP
   email:
     enabled: false  # Disabled by default - configure before enabling
-    # ⚠️ SECURITY: Never commit credentials! Copy config.example.yaml and add your credentials here
-    from_email: ""
-    to_email: ""
-    smtp_server: "smtp.gmail.com"
-    smtp_port: 587
-    password: ""
+    # ⚠️ SECURITY: Never commit credentials! Copy this file to config.yaml and add your credentials there
+    from_email: "your-email@example.com"  # Replace with your email
+    to_email: "your-email@example.com"    # Replace with recipient email
+    smtp_server: "smtp.gmail.com"         # Gmail SMTP server (or your provider)
+    smtp_port: 587                        # Standard SMTP port with STARTTLS
+    password: "YOUR_APP_PASSWORD_HERE"    # ⚠️ Use app-specific password, NOT your main password!
     event_types:
       trade: true
       opportunity: false   # Often too frequent for email
@@ -147,9 +147,9 @@ notifications:
   # Telegram bot notifications
   telegram:
     enabled: false  # Disabled by default - configure before enabling
-    # ⚠️ SECURITY: Never commit credentials! Get bot_token from @BotFather on Telegram
-    bot_token: ""
-    chat_id: ""
+    # ⚠️ SECURITY: Never commit credentials! Copy this file to config.yaml and add your credentials there
+    bot_token: "YOUR_BOT_TOKEN_HERE"     # Get from @BotFather on Telegram
+    chat_id: "YOUR_CHAT_ID_HERE"         # Your Telegram chat ID
     event_types:
       trade: true
       opportunity: true
@@ -179,7 +179,7 @@ notifications:
     enabled: false
     start_time: "23:00"    # 11 PM
     end_time: "07:00"      # 7 AM
-    timezone: "America/New_York"
+    timezone: "America/New_York"  # Your timezone
   
   # Test notifications
   test_mode:
@@ -192,7 +192,7 @@ notification_triggers:
   high_value_opportunity:
     enabled: true
     min_edge_percent: 5.0      # Notify on opportunities with >5% edge
-    channels: ['desktop', 'telegram']
+    channels: ['desktop', 'telegram']  # Which channels to use
   
   daily_loss_limit:
     enabled: true

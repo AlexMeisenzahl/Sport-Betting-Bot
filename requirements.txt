@@ -3,6 +3,13 @@
 # Core dependencies
 PyYAML>=6.0.1
 
+# Notification system dependencies
+plyer>=2.1.0           # Cross-platform desktop notifications
+requests>=2.31.0       # HTTP requests for Telegram API
+
+# Optional notification enhancements
+# win10toast>=0.9      # Windows 10 toast notifications (Windows only)
+
 # For potential future real API integrations
 # (Currently using mock data for paper trading)
 
