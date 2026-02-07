@@ -5,6 +5,7 @@ Fetches live sports betting odds from The Odds API (theoddsapi.com)
 
 import requests
 import time
+import random
 from typing import Dict, List, Optional
 from datetime import datetime, timedelta
 from utils.logger import setup_logger
@@ -305,7 +306,6 @@ class OddsAPIClient:
     
     def _get_mock_sports(self) -> List[Dict]:
         """Get mock sports list"""
-        import random
         return [
             {'key': 'basketball_nba', 'title': 'NBA', 'active': True},
             {'key': 'americanfootball_nfl', 'title': 'NFL', 'active': True},
@@ -318,7 +318,6 @@ class OddsAPIClient:
     
     def _get_mock_odds(self, sport: str) -> List[Dict]:
         """Generate mock odds data for testing"""
-        import random
         
         # Mock team names by sport
         teams = {

@@ -5,6 +5,8 @@ No API key required (unofficial API)
 """
 
 import requests
+import time
+import random
 from typing import Dict, List, Optional
 from datetime import datetime, timedelta
 from utils.logger import setup_logger
@@ -56,7 +58,6 @@ class SportsDataAPI:
     def _check_cache(self, cache_key: str) -> Optional[Dict]:
         """Check if cached data is still valid"""
         if cache_key in self.cache:
-            import time
             data, timestamp = self.cache[cache_key]
             if time.time() - timestamp < self.cache_ttl:
                 logger.debug(f"Cache hit for {cache_key}")
@@ -67,7 +68,6 @@ class SportsDataAPI:
     
     def _update_cache(self, cache_key: str, data: Dict):
         """Update cache with new data"""
-        import time
         self.cache[cache_key] = (data, time.time())
     
     def _make_request(self, url: str) -> Optional[Dict]:
@@ -345,7 +345,6 @@ class SportsDataAPI:
     
     def _get_mock_scoreboard(self, sport: str) -> Dict:
         """Generate mock scoreboard data"""
-        import random
         
         teams = {
             'nba': [
