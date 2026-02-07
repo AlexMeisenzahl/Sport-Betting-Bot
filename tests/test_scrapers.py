@@ -181,49 +181,59 @@ class TestSportsbookManagerHybrid:
     @patch('sportsbooks.scrapers.oddsportal_scraper.OddsPortalScraper')
     @patch('sportsbooks.scrapers.oddschecker_scraper.OddsCheckerScraper')
     def test_priority_fallback(self, mock_oddschecker, mock_oddsportal):
-        """Test priority fallback logic"""
-        # Test that scrapers can be mocked and would be called in priority order
-        # This verifies the hybrid system architecture supports priority-based fallback
+        """Test scraper mocking infrastructure for priority fallback"""
+        # This test verifies the mocking infrastructure that will be used for
+        # testing priority fallback in SportsbookManager integration tests.
+        # It ensures scrapers can be mocked and return data in the expected format.
         
-        # Mock the scrapers to return test data
+        # Mock the scrapers to return test data in expected format
         mock_portal_instance = Mock()
-        mock_portal_instance.get_odds.return_value = {'fanduel': {'moneyline': {'home': -110, 'away': 110}}}
+        mock_portal_instance.get_odds.return_value = {
+            'fanduel': {
+                'moneyline': {'home': -110, 'away': 110}
+            }
+        }
         mock_oddsportal.return_value = mock_portal_instance
         
         mock_checker_instance = Mock()
-        mock_checker_instance.get_odds.return_value = {'draftkings': {'moneyline': {'home': -115, 'away': 115}}}
+        mock_checker_instance.get_odds.return_value = {
+            'draftkings': {
+                'moneyline': {'home': -115, 'away': 115}
+            }
+        }
         mock_oddschecker.return_value = mock_checker_instance
         
-        # Verify mocks are properly set up
-        assert mock_oddsportal is not None
-        assert mock_oddschecker is not None
-        
-        # In a full implementation, we would test SportsbookManager here
-        # For now, we verify that the mocking infrastructure works
+        # Verify mocks work correctly
         portal = mock_oddsportal()
         checker = mock_oddschecker()
         
         portal_odds = portal.get_odds('nba', 'game_123')
         checker_odds = checker.get_odds('nba', 'game_123')
         
+        # Verify the data structure is correct
         assert 'fanduel' in portal_odds
         assert 'draftkings' in checker_odds
+        assert 'moneyline' in portal_odds['fanduel']
+        assert 'moneyline' in checker_odds['draftkings']
     
     def test_data_source_status(self):
-        """Test data source status reporting"""
-        # Test that we can query data source status
-        # In a full implementation with SportsbookManager, this would test:
-        # - Which data sources are enabled
-        # - Which data sources are currently active
-        # - Priority order of data sources
+        """Test scraper has required attributes for status reporting"""
+        # Verify scrapers have the necessary attributes to report their status
+        # This ensures they can be integrated into SportsbookManager's status reporting
         
-        # For now, verify the concept by checking that scrapers have status methods
-        scraper = OddsPortalScraper()
+        portal_scraper = OddsPortalScraper()
+        checker_scraper = OddsCheckerScraper()
         
-        # Verify scraper has expected attributes
-        assert hasattr(scraper, 'BASE_URL')
-        assert hasattr(scraper, 'SPORT_URLS')
-        assert scraper.BASE_URL == "https://www.oddsportal.com"
+        # Verify both scrapers have expected attributes for status reporting
+        for scraper in [portal_scraper, checker_scraper]:
+            assert hasattr(scraper, 'BASE_URL')
+            assert hasattr(scraper, 'SPORT_URLS')
+            assert isinstance(scraper.SPORT_URLS, dict)
+            assert len(scraper.SPORT_URLS) > 0
+        
+        # Verify URLs are properly set
+        assert portal_scraper.BASE_URL == "https://www.oddsportal.com"
+        assert checker_scraper.BASE_URL == "https://www.oddschecker.com"
 
 
 if __name__ == "__main__":
