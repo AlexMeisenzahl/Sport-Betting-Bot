@@ -101,8 +101,8 @@ class NCAABHandler:
             'team': api_stats.get('name', ''),
             'record': api_stats.get('record', '0-0'),
             'standings': api_stats.get('standings', ''),
-            'kenpom_rating': random.uniform(5.0, 25.0),
-            'points_per_game': random.uniform(65.0, 85.0)
+            'kenpom_rating': random.uniform(5.0, 25.0),  # ESPN API doesn't provide KenPom
+            'points_per_game': random.uniform(65.0, 85.0)  # Would need game-by-game data
         }
     
     def _get_mock_team_stats(self, team_name: str) -> Dict:

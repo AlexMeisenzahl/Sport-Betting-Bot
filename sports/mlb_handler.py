@@ -105,8 +105,8 @@ class MLBHandler:
             'team': api_stats.get('name', ''),
             'record': api_stats.get('record', '0-0'),
             'standings': api_stats.get('standings', ''),
-            'woba': random.uniform(0.310, 0.350),
-            'runs_per_game': random.uniform(3.8, 5.2)
+            'woba': random.uniform(0.310, 0.350),  # ESPN API doesn't provide wOBA
+            'runs_per_game': random.uniform(3.8, 5.2)  # Would need game-by-game data
         }
     
     def _get_mock_team_stats(self, team_name: str) -> Dict:

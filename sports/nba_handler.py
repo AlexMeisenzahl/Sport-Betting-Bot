@@ -129,13 +129,13 @@ class NBAHandler:
             'team': api_stats.get('name', ''),
             'record': api_stats.get('record', '0-0'),
             'standings': api_stats.get('standings', ''),
-            'offensive_rating': random.uniform(108, 118),  # Would need advanced stats
-            'defensive_rating': random.uniform(108, 118),
-            'net_rating': random.uniform(-3, 8),
-            'pace': random.uniform(96, 103),
-            'home_record': (25, 10),  # Would parse from record
-            'away_record': (20, 15),
-            'last_10': (6, 4)
+            'offensive_rating': random.uniform(108, 118),  # Would need advanced stats API
+            'defensive_rating': random.uniform(108, 118),  # Would need advanced stats API
+            'net_rating': random.uniform(-3, 8),  # Would need advanced stats API
+            'pace': random.uniform(96, 103),  # Would need advanced stats API
+            'home_record': (25, 10),  # Would parse from detailed stats
+            'away_record': (20, 15),  # Would parse from detailed stats
+            'last_10': (6, 4)  # Would need recent games data
         }
     
     def _get_mock_team_stats(self, team_name: str) -> Dict:

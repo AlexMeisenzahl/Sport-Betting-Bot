@@ -101,8 +101,8 @@ class NHLHandler:
             'team': api_stats.get('name', ''),
             'record': api_stats.get('record', '0-0'),
             'standings': api_stats.get('standings', ''),
-            'goals_per_game': random.uniform(2.5, 3.5),
-            'goals_against': random.uniform(2.5, 3.5)
+            'goals_per_game': random.uniform(2.5, 3.5),  # Would need game-by-game data
+            'goals_against': random.uniform(2.5, 3.5)  # Would need game-by-game data
         }
     
     def _get_mock_team_stats(self, team_name: str) -> Dict:

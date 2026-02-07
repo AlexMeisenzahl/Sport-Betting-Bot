@@ -101,8 +101,8 @@ class NCAAFHandler:
             'team': api_stats.get('name', ''),
             'record': api_stats.get('record', '0-0'),
             'standings': api_stats.get('standings', ''),
-            'points_per_game': random.uniform(25.0, 40.0),
-            'yards_per_play': random.uniform(5.5, 7.0)
+            'points_per_game': random.uniform(25.0, 40.0),  # Would need game-by-game data
+            'yards_per_play': random.uniform(5.5, 7.0)  # Would need game-by-game data
         }
     
     def _get_mock_team_stats(self, team_name: str) -> Dict:

@@ -109,9 +109,9 @@ class NFLHandler:
             'team': api_stats.get('name', ''),
             'record': api_stats.get('record', '0-0'),
             'standings': api_stats.get('standings', ''),
-            'dvoa': random.uniform(-15, 15),
-            'yards_per_play': random.uniform(5.0, 6.5),
-            'points_per_game': random.uniform(20, 30)
+            'dvoa': random.uniform(-15, 15),  # ESPN API doesn't provide DVOA
+            'yards_per_play': random.uniform(5.0, 6.5),  # Would need game-by-game data
+            'points_per_game': random.uniform(20, 30)  # Would need game-by-game data
         }
     
     def _get_mock_team_stats(self, team_name: str) -> Dict:
