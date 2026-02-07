@@ -74,7 +74,7 @@ class SportsbookManager:
         """
         if self.use_live_api and self.odds_api:
             sport_key = self._map_sport_to_api_key(sport)
-            enabled_bookmaker_keys = [k for k, v in self.books.items()]
+            enabled_bookmaker_keys = list(self.books.keys())
             
             try:
                 odds = self.odds_api.get_odds(

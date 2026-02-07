@@ -248,6 +248,76 @@ python bot.py
 
 ---
 
+## 🌐 Live API Integration
+
+The bot now supports live data from real sports betting APIs! This transforms it from using simulated data to fetching actual games and odds.
+
+### ESPN API (Free - No Key Required)
+
+ESPN API is automatically enabled for fetching live game schedules and scores across all sports.
+
+```yaml
+# config.yaml
+apis:
+  espn_api:
+    enabled: true  # No API key needed!
+```
+
+**Features:**
+- ✅ Live NBA, NFL, MLB, NHL, Soccer, NCAAF, and NCAAB game schedules
+- ✅ Real-time scores and game status
+- ✅ No rate limits or cost
+- ✅ Automatic fallback to mock data if unavailable
+
+### The Odds API (Live Betting Odds)
+
+Get live odds from major sportsbooks like FanDuel, DraftKings, and BetMGM.
+
+**1. Get Your API Key:**
+- Visit https://the-odds-api.com/
+- Sign up for free account (500 requests/month)
+- Or upgrade to paid plan ($10/month for 5,000 requests)
+
+**2. Configure in `config.yaml`:**
+```yaml
+apis:
+  the_odds_api:
+    enabled: true
+    api_key: "YOUR_API_KEY_HERE"
+    rate_limit: 500
+```
+
+**Supported Markets:**
+- Moneyline (h2h)
+- Spreads
+- Totals (Over/Under)
+
+**Supported Sportsbooks:**
+- FanDuel
+- DraftKings
+- BetMGM
+- Caesars
+- PointsBet
+
+### Testing Live APIs
+
+The bot gracefully handles API availability:
+
+```python
+# Test with live APIs enabled
+python bot.py
+
+# The bot will:
+# ✅ Fetch real games from ESPN if available
+# ✅ Get live odds from The Odds API if configured
+# ✅ Fall back to mock data if APIs are unavailable
+# ✅ Continue operating in paper trading mode for safety
+```
+
+**Note:** Even with live APIs enabled, the bot still operates in paper trading mode (no real money). This allows you to test strategies with real data before deploying with actual funds.
+
+---
+
 ## 🚀 Quick Start
 
 ### 1. Configure Your Settings
@@ -396,6 +466,84 @@ Action: BET Over 27.5
 - Live lines lag real-time game state
 - Detect overreactions and value
 - Create hedging opportunities
+
+---
+
+## 📊 Dashboard Features
+
+### Terminal Dashboard with Rich UI
+
+The bot features a beautiful, color-coded terminal dashboard powered by the Rich library:
+
+```bash
+python bot.py
+```
+
+**Features:**
+- 💰 **Bankroll Metrics** - Current balance, profit/loss, ROI
+- 📊 **Bet Statistics** - Win rate, total bets, pending bets
+- 📈 **CLV Tracking** - Real-time closing line value analysis
+- 🎯 **Strategy Performance** - Per-strategy ROI breakdown
+- 🎨 **Color-Coded** - Green for profits, red for losses, yellow for warnings
+
+**Rich Terminal Features:**
+- Live updating tables with formatted data
+- Colored text for better readability
+- Progress bars and status indicators
+- Organized panel layouts
+
+### Web Dashboard
+
+Access the interactive web dashboard for advanced analytics:
+
+```bash
+# Start the dashboard
+python start_dashboard.py
+
+# Or run directly
+cd dashboard
+python app.py
+```
+
+Then open http://localhost:5000 in your browser.
+
+**Dashboard Features:**
+
+**📈 Enhanced Analytics:**
+- `/api/overview` - Real-time bankroll and performance metrics
+- `/api/charts/cumulative-pnl` - Cumulative profit/loss chart
+- `/api/charts/strategy-performance` - Strategy comparison bar chart
+- Interactive Chart.js visualizations
+
+**📥 CSV Export:**
+- Export all trades to CSV for external analysis
+- Filter by date range, sport, or strategy
+- One-click download with formatted data
+
+**🔔 Alerts & Notifications:**
+- View betting alerts and opportunities
+- Filter by sport, confidence level, or time range
+- Pagination for historical data
+
+**⚙️ Settings Management:**
+- Update configuration without editing YAML
+- Enable/disable strategies and sports on the fly
+- Automatic config backups
+
+### JavaScript Integration
+
+The enhanced dashboard includes a complete JavaScript class for frontend functionality:
+
+```javascript
+// Auto-loads on page load
+const enhancedDashboard = new BettingBotDashboard();
+
+// Features:
+// - Automatic chart rendering with Chart.js
+// - Live data updates every 60 seconds
+// - CSV export functionality
+// - Metric card updates
+```
 
 ---
 
