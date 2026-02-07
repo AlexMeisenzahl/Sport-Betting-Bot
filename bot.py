@@ -79,12 +79,20 @@ class SportsBettingBot:
             kelly_fraction=self.config.get_kelly_fraction()
         )
         
-        # Initialize sportsbook manager with API client
-        enabled_books = {
-            book: self.config.get('sportsbooks', book, 'enabled', default=False)
-            for book in ['fanduel', 'draftkings', 'betmgm', 'caesars', 'pointsbet']
-        }
-        self.sportsbook_manager = SportsbookManager(enabled_books, self.odds_api_client)
+        # Initialize sportsbook manager with hybrid data sources
+        self.sportsbook_manager = SportsbookManager(self.config.config, self.odds_api_client)
+        
+        # Display data source status
+        data_source_status = self.sportsbook_manager.get_data_source_status()
+        logger.info("\n📊 DATA SOURCE STATUS:")
+        logger.info(f"  Priority: {' → '.join(data_source_status['priority_order'])}")
+        if data_source_status['free_scraping']['enabled']:
+            scrapers = ', '.join(data_source_status['free_scraping']['scrapers'])
+            logger.info(f"  ✓ Free Scraping: {scrapers}")
+        if data_source_status['the_odds_api']['enabled']:
+            mode = data_source_status['the_odds_api']['mode']
+            logger.info(f"  ✓ The Odds API: {mode}")
+        logger.info("")
         
         # Initialize analytics
         self.performance_tracker = PerformanceTracker()
@@ -529,6 +537,26 @@ class SportsBettingBot:
             
             console.print(stats_table)
             
+            # Data Source Status
+            data_source_status = self.sportsbook_manager.get_data_source_status()
+            ds_text = Text()
+            ds_text.append(f"Priority: {' → '.join(data_source_status['priority_order'])}\n", style="white")
+            
+            if data_source_status['free_scraping']['enabled']:
+                scrapers = ', '.join(data_source_status['free_scraping']['scrapers'])
+                ds_text.append(f"✓ Free Scraping: {scrapers}\n", style="green")
+            else:
+                ds_text.append("✗ Free Scraping: Disabled\n", style="dim")
+            
+            if data_source_status['the_odds_api']['enabled']:
+                mode = data_source_status['the_odds_api']['mode']
+                ds_text.append(f"✓ The Odds API: {mode}", style="green" if mode == "LIVE" else "yellow")
+            else:
+                ds_text.append("✗ The Odds API: Disabled", style="dim")
+            
+            ds_panel = Panel(ds_text, title="📊 DATA SOURCES", border_style="cyan", box=box.ROUNDED)
+            console.print(ds_panel)
+            
             # CLV Analysis
             if self.clv_tracker.clv_records:
                 avg_clv = self.clv_tracker.calculate_average_clv()
@@ -579,6 +607,17 @@ class SportsBettingBot:
         print(f"   Current: ${stats['current_bankroll']:.2f}")
         print(f"   Starting: ${stats['starting_bankroll']:.2f}")
         print(f"   Profit/Loss: ${stats['total_profit']:.2f} ({stats['roi']*100:+.2f}%)")
+        
+        # Data source status
+        data_source_status = self.sportsbook_manager.get_data_source_status()
+        print(f"\n📊 DATA SOURCES")
+        print(f"   Priority: {' → '.join(data_source_status['priority_order'])}")
+        if data_source_status['free_scraping']['enabled']:
+            scrapers = ', '.join(data_source_status['free_scraping']['scrapers'])
+            print(f"   ✓ Free Scraping: {scrapers}")
+        if data_source_status['the_odds_api']['enabled']:
+            mode = data_source_status['the_odds_api']['mode']
+            print(f"   ✓ The Odds API: {mode}")
         
         # Bet statistics
         print(f"\n📊 BETTING STATISTICS")
