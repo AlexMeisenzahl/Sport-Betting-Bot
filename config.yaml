@@ -91,16 +91,46 @@ risk_management:
 
 # ===== DATA SOURCES =====
 data_sources:
+  # The Odds API Configuration
+  # Get free API key at: https://the-odds-api.com/ (500 requests/month)
   odds_api:
     provider: "the-odds-api"
-    api_key: ""  # Optional for paper trading
+    api_key: ""  # Add your API key here (leave empty for mock/paper trading)
+    use_mock: true  # Set to false to use real API (requires api_key)
     update_frequency_seconds: 10
+    cache_ttl_seconds: 60  # Cache odds for 60 seconds to minimize API calls
+    rate_limit:
+      min_interval_seconds: 1  # Minimum 1 second between API calls
+      max_requests_per_month: 500  # Free tier limit
     
+    # Enabled bookmakers (must match The Odds API keys)
+    enabled_bookmakers:
+      - fanduel
+      - draftkings
+      - betmgm
+      - williamhill_us  # Caesars
+      - pointsbetus
+    
+    # Enabled bet markets
+    enabled_markets:
+      - h2h        # Moneyline
+      - spreads    # Point spreads
+      - totals     # Over/Under
+  
+  # ESPN API Configuration (Free, no API key needed)
+  espn_api:
+    use_mock: true  # Set to false to use real ESPN API
+    cache_ttl_seconds: 60  # Cache game data for 60 seconds
+    
+  # Legacy stats API configuration (deprecated, using ESPN API now)
   stats_api:
-    nba: "nba_api"
-    nfl: "nfl_data_py"
-    mlb: "pybaseball"
-    nhl: "nhl_api"
+    nba: "espn"
+    nfl: "espn"
+    mlb: "espn"
+    nhl: "espn"
+    soccer: "espn"
+    ncaaf: "espn"
+    ncaab: "espn"
 
 # ===== TESTING =====
 testing:

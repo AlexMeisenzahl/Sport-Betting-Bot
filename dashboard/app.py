@@ -451,6 +451,275 @@ def get_leagues():
 
 
 # ============================================================================
+# ENHANCED API ENDPOINTS - TRADING DATA
+# ============================================================================
+
+@app.route('/api/overview', methods=['GET'])
+def get_dashboard_overview():
+    """
+    Get comprehensive dashboard overview with live data
+    
+    Returns:
+        - Current bankroll and P&L
+        - Active bets count
+        - Today's performance
+        - Strategy breakdown
+        - Recent opportunities
+    """
+    try:
+        # This would connect to the running bot instance in production
+        # For now, return mock data structure
+        overview = {
+            'bankroll': {
+                'current': 0,
+                'starting': 500,
+                'profit_loss': 0,
+                'roi_percent': 0
+            },
+            'stats': {
+                'total_bets': 0,
+                'wins': 0,
+                'losses': 0,
+                'pending': 0,
+                'win_rate': 0
+            },
+            'today': {
+                'bets_placed': 0,
+                'profit_loss': 0,
+                'opportunities_found': 0
+            },
+            'strategies': [],
+            'recent_opportunities': []
+        }
+        
+        return jsonify({
+            'success': True,
+            'overview': overview
+        })
+    
+    except Exception as e:
+        logger.error(f"Error fetching dashboard overview: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+@app.route('/api/charts/pnl', methods=['GET'])
+def get_pnl_chart_data():
+    """
+    Get cumulative P&L chart data
+    
+    Query parameters:
+        - period: '7d', '30d', '90d', 'all' (default: '30d')
+    """
+    try:
+        period = request.args.get('period', '30d')
+        
+        # Mock chart data structure
+        chart_data = {
+            'labels': [],  # Dates
+            'datasets': [{
+                'label': 'Cumulative P&L',
+                'data': [],  # P&L values
+                'borderColor': 'rgb(75, 192, 192)',
+                'tension': 0.1
+            }]
+        }
+        
+        return jsonify({
+            'success': True,
+            'data': chart_data
+        })
+    
+    except Exception as e:
+        logger.error(f"Error fetching P&L chart data: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+@app.route('/api/charts/strategy', methods=['GET'])
+def get_strategy_chart_data():
+    """
+    Get strategy performance comparison chart data
+    
+    Returns:
+        Bar chart data comparing ROI across strategies
+    """
+    try:
+        chart_data = {
+            'labels': [],  # Strategy names
+            'datasets': [{
+                'label': 'ROI %',
+                'data': [],  # ROI percentages
+                'backgroundColor': [
+                    'rgba(255, 99, 132, 0.5)',
+                    'rgba(54, 162, 235, 0.5)',
+                    'rgba(255, 206, 86, 0.5)',
+                    'rgba(75, 192, 192, 0.5)',
+                    'rgba(153, 102, 255, 0.5)',
+                ]
+            }]
+        }
+        
+        return jsonify({
+            'success': True,
+            'data': chart_data
+        })
+    
+    except Exception as e:
+        logger.error(f"Error fetching strategy chart data: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+@app.route('/api/trades/history', methods=['GET'])
+def get_trades_history():
+    """
+    Get paginated trade history
+    
+    Query parameters:
+        - page: Page number (default 1)
+        - per_page: Items per page (default 25, max 100)
+        - status: Filter by status ('pending', 'won', 'lost', 'all')
+        - strategy: Filter by strategy name
+        - sport: Filter by sport
+        - start_date: Filter start date (ISO format)
+        - end_date: Filter end date (ISO format)
+    """
+    try:
+        page = request.args.get('page', 1, type=int)
+        per_page = min(request.args.get('per_page', 25, type=int), 100)
+        status = request.args.get('status', 'all')
+        strategy = request.args.get('strategy')
+        sport = request.args.get('sport')
+        start_date = request.args.get('start_date')
+        end_date = request.args.get('end_date')
+        
+        # Mock trade history structure
+        trades = {
+            'items': [],
+            'total': 0,
+            'page': page,
+            'per_page': per_page,
+            'pages': 0
+        }
+        
+        return jsonify({
+            'success': True,
+            'trades': trades
+        })
+    
+    except Exception as e:
+        logger.error(f"Error fetching trade history: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+@app.route('/api/export/trades', methods=['GET'])
+def export_trades_csv():
+    """
+    Export trade history as CSV file
+    
+    Query parameters:
+        - status: Filter by status
+        - strategy: Filter by strategy
+        - sport: Filter by sport
+        - start_date: Filter start date
+        - end_date: Filter end date
+    """
+    try:
+        from flask import Response
+        import io
+        import csv
+        
+        # Get filter parameters
+        status = request.args.get('status', 'all')
+        strategy = request.args.get('strategy')
+        sport = request.args.get('sport')
+        start_date = request.args.get('start_date')
+        end_date = request.args.get('end_date')
+        
+        # Mock CSV data
+        output = io.StringIO()
+        writer = csv.writer(output)
+        
+        # Write header
+        writer.writerow([
+            'Date', 'Sport', 'Game', 'Strategy', 'Bet Type', 
+            'Side', 'Stake', 'Odds', 'Result', 'Profit/Loss'
+        ])
+        
+        # In production, would fetch actual trade data and write rows
+        # writer.writerow([...])
+        
+        # Create response
+        output.seek(0)
+        return Response(
+            output.getvalue(),
+            mimetype='text/csv',
+            headers={
+                'Content-Disposition': 'attachment; filename=trades_export.csv'
+            }
+        )
+    
+    except Exception as e:
+        logger.error(f"Error exporting trades: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+@app.route('/api/bot/status', methods=['GET'])
+def get_bot_status():
+    """
+    Get current bot status
+    
+    Returns:
+        - Running status
+        - Uptime
+        - API connection status
+        - Last update time
+    """
+    try:
+        status = {
+            'running': False,
+            'uptime_seconds': 0,
+            'api_connections': {
+                'odds_api': {
+                    'connected': False,
+                    'mode': 'mock',
+                    'requests_remaining': 500
+                },
+                'espn_api': {
+                    'connected': False,
+                    'mode': 'mock'
+                }
+            },
+            'last_update': None
+        }
+        
+        return jsonify({
+            'success': True,
+            'status': status
+        })
+    
+    except Exception as e:
+        logger.error(f"Error fetching bot status: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+# ============================================================================
 # ERROR HANDLERS
 # ============================================================================
 

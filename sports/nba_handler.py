@@ -1,9 +1,10 @@
 """
 NBA Sport Handler
 Fetches games, stats, injuries, and props for NBA
+Now supports both mock data (paper trading) and live ESPN API data
 """
 
-from typing import Dict, List
+from typing import Dict, List, Optional
 from datetime import datetime
 from utils.logger import setup_logger
 import random
@@ -15,17 +16,65 @@ logger = setup_logger("nba_handler")
 class NBAHandler:
     """Handle NBA-specific data and game fetching"""
     
-    def __init__(self):
-        logger.info("NBA Handler initialized")
+    def __init__(self, sports_data_api=None):
+        """
+        Initialize NBA handler
+        
+        Args:
+            sports_data_api: Optional SportsDataAPI instance for live data
+        """
+        self.sports_data_api = sports_data_api
+        self.use_live_api = sports_data_api is not None and not sports_data_api.use_mock
+        
+        mode = "LIVE ESPN API" if self.use_live_api else "MOCK"
+        logger.info(f"NBA Handler initialized in {mode} mode")
     
     def fetch_games_today(self) -> List[Dict]:
         """
         Get all NBA games scheduled today
         
-        In production: Use nba_api or ESPN API
-        For now: Generate mock games
+        Returns:
+            List of game dictionaries
         """
-        # Mock NBA games
+        if self.use_live_api:
+            return self._fetch_live_games()
+        else:
+            return self._fetch_mock_games()
+    
+    def _fetch_live_games(self) -> List[Dict]:
+        """Fetch games from ESPN API"""
+        try:
+            games_data = self.sports_data_api.get_todays_games('nba')
+            
+            # Convert to our format
+            games = []
+            for game_data in games_data:
+                game = {
+                    'game_id': game_data['game_id'],
+                    'home': game_data['home']['name'],
+                    'away': game_data['away']['name'],
+                    'start_time': game_data['start_time'],
+                    'home_record': game_data['home'].get('record', '0-0'),
+                    'away_record': game_data['away'].get('record', '0-0'),
+                    'status': game_data.get('status', 'pre'),
+                    'venue': game_data.get('venue', ''),
+                    # Rest days require tracking team schedules over time
+                    'home_rest_days': 1,
+                    'away_rest_days': 1,
+                    'home_back_to_back': False,
+                    'away_back_to_back': False
+                }
+                games.append(game)
+            
+            logger.info(f"Fetched {len(games)} NBA games from ESPN API")
+            return games
+            
+        except Exception as e:
+            logger.error(f"Error fetching live NBA games: {e}")
+            return self._fetch_mock_games()
+    
+    def _fetch_mock_games(self) -> List[Dict]:
+        """Generate mock NBA games"""
         games = [
             {
                 'game_id': 'nba_001',
@@ -49,17 +98,48 @@ class NBAHandler:
             }
         ]
         
-        logger.info(f"Fetched {len(games)} NBA games for today")
+        logger.info(f"Generated {len(games)} mock NBA games")
         return games
     
-    def get_team_stats(self, team_name: str) -> Dict:
+    def get_team_stats(self, team_name: str, team_id: Optional[str] = None) -> Dict:
         """
         Get team statistics
-        Off/def rating, pace, net rating, home/road splits
         
-        In production: Fetch from nba_api
+        Args:
+            team_name: Team name
+            team_id: Optional team ID for live API
+            
+        Returns:
+            Team statistics dictionary
         """
-        # Mock stats
+        if self.use_live_api and team_id:
+            try:
+                stats = self.sports_data_api.get_team_stats('nba', team_id)
+                if stats:
+                    return self._format_team_stats(stats)
+            except Exception as e:
+                logger.error(f"Error fetching live team stats: {e}")
+        
+        # Fall back to mock stats
+        return self._get_mock_team_stats(team_name)
+    
+    def _format_team_stats(self, api_stats: Dict) -> Dict:
+        """Format ESPN API stats to our format"""
+        return {
+            'team': api_stats.get('name', ''),
+            'record': api_stats.get('record', '0-0'),
+            'standings': api_stats.get('standings', ''),
+            'offensive_rating': random.uniform(108, 118),  # Would need advanced stats API
+            'defensive_rating': random.uniform(108, 118),  # Would need advanced stats API
+            'net_rating': random.uniform(-3, 8),  # Would need advanced stats API
+            'pace': random.uniform(96, 103),  # Would need advanced stats API
+            'home_record': (25, 10),  # Would parse from detailed stats
+            'away_record': (20, 15),  # Would parse from detailed stats
+            'last_10': (6, 4)  # Would need recent games data
+        }
+    
+    def _get_mock_team_stats(self, team_name: str) -> Dict:
+        """Generate mock team stats"""
         stats = {
             'team': team_name,
             'offensive_rating': random.uniform(108, 118),
@@ -71,14 +151,15 @@ class NBAHandler:
             'last_10': (random.randint(4, 8), random.randint(2, 6))
         }
         
-        logger.debug(f"Fetched stats for {team_name}")
+        logger.debug(f"Generated mock stats for {team_name}")
         return stats
     
     def get_injury_report(self) -> List[Dict]:
         """
         Current injuries with impact ratings
         
-        In production: Fetch from official NBA injury report
+        Note: ESPN API doesn't provide detailed injury data
+        Would need a different source for production
         """
         injuries = [
             {
@@ -90,14 +171,14 @@ class NBAHandler:
             }
         ]
         
-        logger.info(f"Fetched {len(injuries)} injuries")
+        logger.info(f"Using mock injury data: {len(injuries)} injuries")
         return injuries
     
     def get_player_props(self, game: Dict) -> List[Dict]:
         """
         Available prop bets for this game
         
-        In production: Fetch from sportsbook APIs
+        Note: Would need sportsbook prop APIs for production
         """
         props = [
             {
@@ -119,3 +200,4 @@ class NBAHandler:
         ]
         
         return props
+

@@ -2,6 +2,7 @@
 Main Sports Betting Bot
 Orchestrates all strategies, sports, and sportsbooks
 Provides real-time dashboard
+Supports both paper trading (mock data) and live API integration
 """
 
 import time
@@ -17,6 +18,10 @@ from utils.notifier import Notifier
 from sportsbooks.book_manager import SportsbookManager
 from analytics.performance_tracker import PerformanceTracker
 from analytics.clv_tracker import CLVTracker
+
+# Import API clients
+from odds_api_client import OddsAPIClient
+from sports_data_api import SportsDataAPI
 
 # Import strategies
 from strategies.sports_arbitrage import SportsArbitrageStrategy
@@ -43,6 +48,7 @@ class SportsBettingBot:
     Main bot with comprehensive dashboard
     
     Tests ALL strategies across ALL sports to identify what works
+    Now supports live API integration with The Odds API and ESPN API
     """
     
     def __init__(self, config_path: str = "config.yaml"):
@@ -53,6 +59,10 @@ class SportsBettingBot:
         
         # Load configuration
         self.config = ConfigLoader(config_path)
+        
+        # Initialize API clients
+        logger.info("Initializing API clients...")
+        self._initialize_api_clients()
         
         # Initialize paper trading
         self.paper_trading = PaperTradingEngine(
@@ -69,12 +79,12 @@ class SportsBettingBot:
             kelly_fraction=self.config.get_kelly_fraction()
         )
         
-        # Initialize sportsbook manager
+        # Initialize sportsbook manager with API client
         enabled_books = {
             book: self.config.get('sportsbooks', book, 'enabled', default=False)
             for book in ['fanduel', 'draftkings', 'betmgm', 'caesars', 'pointsbet']
         }
-        self.sportsbook_manager = SportsbookManager(enabled_books)
+        self.sportsbook_manager = SportsbookManager(enabled_books, self.odds_api_client)
         
         # Initialize analytics
         self.performance_tracker = PerformanceTracker()
@@ -116,27 +126,62 @@ class SportsBettingBot:
                 min_edge_percent=self.config.get('strategies', 'live_betting', 'min_edge_percent', default=5)
             )
         
-        # Initialize sport handlers
+        # Initialize sport handlers with API client
         self.sport_handlers = {}
         if self.config.is_sport_enabled('nba'):
-            self.sport_handlers['nba'] = NBAHandler()
+            self.sport_handlers['nba'] = NBAHandler(self.sports_data_api)
         if self.config.is_sport_enabled('nfl'):
-            self.sport_handlers['nfl'] = NFLHandler()
+            self.sport_handlers['nfl'] = NFLHandler(self.sports_data_api)
         if self.config.is_sport_enabled('mlb'):
-            self.sport_handlers['mlb'] = MLBHandler()
+            self.sport_handlers['mlb'] = MLBHandler(self.sports_data_api)
         if self.config.is_sport_enabled('nhl'):
-            self.sport_handlers['nhl'] = NHLHandler()
+            self.sport_handlers['nhl'] = NHLHandler(self.sports_data_api)
         if self.config.is_sport_enabled('soccer'):
-            self.sport_handlers['soccer'] = SoccerHandler()
+            self.sport_handlers['soccer'] = SoccerHandler(self.sports_data_api)
         if self.config.is_sport_enabled('ncaaf'):
-            self.sport_handlers['ncaaf'] = NCAAFHandler()
+            self.sport_handlers['ncaaf'] = NCAAFHandler(self.sports_data_api)
         if self.config.is_sport_enabled('ncaab'):
-            self.sport_handlers['ncaab'] = NCAABHandler()
+            self.sport_handlers['ncaab'] = NCAABHandler(self.sports_data_api)
         
         self.running = False
         self.day_count = 0
         
         logger.info(f"Initialized with {len(self.strategies)} strategies and {len(self.sport_handlers)} sports")
+    
+    def _initialize_api_clients(self):
+        """Initialize API clients for odds and sports data"""
+        # Initialize The Odds API client
+        odds_config = self.config.get('data_sources', 'odds_api', default={})
+        api_key = odds_config.get('api_key', '')
+        use_mock = odds_config.get('use_mock', True)
+        
+        self.odds_api_client = OddsAPIClient(
+            api_key=api_key if api_key else None,
+            use_mock=use_mock or not api_key
+        )
+        
+        # Update cache TTL if configured
+        if 'cache_ttl_seconds' in odds_config:
+            self.odds_api_client.cache_ttl = odds_config['cache_ttl_seconds']
+        
+        # Update rate limit if configured
+        if 'rate_limit' in odds_config:
+            rate_limit = odds_config['rate_limit']
+            if 'min_interval_seconds' in rate_limit:
+                self.odds_api_client.min_request_interval = rate_limit['min_interval_seconds']
+        
+        # Initialize ESPN API client
+        espn_config = self.config.get('data_sources', 'espn_api', default={})
+        use_mock_espn = espn_config.get('use_mock', True)
+        
+        self.sports_data_api = SportsDataAPI(use_mock=use_mock_espn)
+        
+        # Update cache TTL if configured
+        if 'cache_ttl_seconds' in espn_config:
+            self.sports_data_api.cache_ttl = espn_config['cache_ttl_seconds']
+        
+        mode = "MOCK (Paper Trading)" if use_mock else "LIVE"
+        logger.info(f"API clients initialized in {mode} mode")
     
     def run(self, duration_days: int = 30):
         """
@@ -438,7 +483,92 @@ class SportsBettingBot:
         - Sport performance breakdown
         - Current opportunities
         - CLV tracking
+        
+        Enhanced with Rich library for better visualization
         """
+        try:
+            from rich.console import Console
+            from rich.table import Table
+            from rich.panel import Panel
+            from rich.layout import Layout
+            from rich.text import Text
+            from rich import box
+            
+            console = Console()
+            
+            # Create main layout
+            console.print(f"\n[bold cyan]{'=' * 80}[/bold cyan]")
+            console.print(f"[bold yellow]SPORTS BETTING BOT DASHBOARD - Day {self.day_count}[/bold yellow]")
+            console.print(f"[bold cyan]{'=' * 80}[/bold cyan]\n")
+            
+            # Get stats
+            stats = self.paper_trading.get_stats()
+            
+            # Bankroll Panel
+            profit_color = "green" if stats['total_profit'] >= 0 else "red"
+            bankroll_text = Text()
+            bankroll_text.append(f"Current: ${stats['current_bankroll']:.2f}\n", style="bold white")
+            bankroll_text.append(f"Starting: ${stats['starting_bankroll']:.2f}\n", style="white")
+            bankroll_text.append(f"Profit/Loss: ${stats['total_profit']:.2f} ({stats['roi']*100:+.2f}%)", style=f"bold {profit_color}")
+            
+            bankroll_panel = Panel(bankroll_text, title="💰 BANKROLL", border_style="cyan", box=box.ROUNDED)
+            console.print(bankroll_panel)
+            
+            # Betting Statistics Table
+            stats_table = Table(title="📊 BETTING STATISTICS", box=box.ROUNDED, border_style="cyan")
+            stats_table.add_column("Metric", style="cyan", width=20)
+            stats_table.add_column("Value", style="white", width=20)
+            
+            stats_table.add_row("Total Bets", str(stats['total_bets']))
+            stats_table.add_row("Wins", f"[green]{stats['wins']}[/green]")
+            stats_table.add_row("Losses", f"[red]{stats['losses']}[/red]")
+            
+            win_rate_color = "green" if stats['win_rate'] >= 0.524 else "yellow" if stats['win_rate'] >= 0.50 else "red"
+            stats_table.add_row("Win Rate", f"[{win_rate_color}]{stats['win_rate']*100:.1f}%[/{win_rate_color}]")
+            stats_table.add_row("Pending", str(stats['pending_bets']))
+            
+            console.print(stats_table)
+            
+            # CLV Analysis
+            if self.clv_tracker.clv_records:
+                avg_clv = self.clv_tracker.calculate_average_clv()
+                clv_color = "green" if avg_clv > 0.5 else "red" if avg_clv < -0.5 else "yellow"
+                clv_status = "✓ BEATING THE CLOSING LINE" if avg_clv > 0.5 else "✗ LOSING TO THE CLOSING LINE" if avg_clv < -0.5 else "≈ NEUTRAL"
+                
+                clv_text = Text()
+                clv_text.append(f"Average CLV: {avg_clv:+.2f} points\n", style=f"bold {clv_color}")
+                clv_text.append(f"Status: {clv_status}", style=clv_color)
+                
+                clv_panel = Panel(clv_text, title="📈 CLOSING LINE VALUE (CLV)", border_style="cyan", box=box.ROUNDED)
+                console.print(clv_panel)
+            
+            # Strategy Performance Table
+            if stats['total_bets'] >= 5:
+                strategy_table = Table(title="🎯 STRATEGY PERFORMANCE", box=box.ROUNDED, border_style="cyan")
+                strategy_table.add_column("Strategy", style="cyan", width=20)
+                strategy_table.add_column("Bets", justify="right", width=10)
+                strategy_table.add_column("ROI", justify="right", width=15)
+                
+                for strategy_name in ['arbitrage', 'clv_model', 'sharp_tracker', 'prop_analyzer', 'live_betting']:
+                    perf = self.performance_tracker.calculate_strategy_performance(strategy_name)
+                    if perf['total_bets'] > 0:
+                        roi_color = "green" if perf['roi'] > 0.02 else "red" if perf['roi'] < 0 else "yellow"
+                        strategy_table.add_row(
+                            strategy_name,
+                            str(perf['total_bets']),
+                            f"[{roi_color}]{perf['roi']*100:+6.2f}%[/{roi_color}]"
+                        )
+                
+                console.print(strategy_table)
+            
+            console.print(f"[bold cyan]{'=' * 80}[/bold cyan]\n")
+            
+        except ImportError:
+            # Fallback to basic display if Rich is not available
+            self._display_dashboard_basic()
+    
+    def _display_dashboard_basic(self):
+        """Fallback dashboard without Rich library"""
         print("\n" + "=" * 80)
         print(f"SPORTS BETTING BOT DASHBOARD - Day {self.day_count}")
         print("=" * 80)
