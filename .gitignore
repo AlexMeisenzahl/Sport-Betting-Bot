@@ -16,6 +16,9 @@ ENV/
 betting_bot_*.log
 logs/
 
+# Ignore dashboard-specific files
+config_backups/
+
 # Ignore IDE and editor files
 .vscode/
 .idea/
