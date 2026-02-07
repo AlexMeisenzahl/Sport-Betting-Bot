@@ -89,6 +89,17 @@ risk_management:
   position_sizing_method: "kelly_fraction"
   kelly_fraction: 0.25
 
+# ===== LIVE APIs =====
+# Configure live API integrations for real odds and game data
+apis:
+  the_odds_api:
+    enabled: false  # Set to true and add API key to enable live odds
+    api_key: ""  # Get from https://the-odds-api.com/ (500 free requests/month)
+    rate_limit: 500  # Monthly request limit
+    
+  espn_api:
+    enabled: true  # ESPN API is free and requires no key
+
 # ===== DATA SOURCES =====
 data_sources:
   odds_api:

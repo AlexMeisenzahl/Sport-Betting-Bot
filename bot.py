@@ -74,7 +74,16 @@ class SportsBettingBot:
             book: self.config.get('sportsbooks', book, 'enabled', default=False)
             for book in ['fanduel', 'draftkings', 'betmgm', 'caesars', 'pointsbet']
         }
-        self.sportsbook_manager = SportsbookManager(enabled_books)
+        
+        # Check if live API is enabled
+        use_live_api = self.config.get('apis', 'the_odds_api', 'enabled', default=False)
+        api_key = self.config.get('apis', 'the_odds_api', 'api_key', default="")
+        
+        self.sportsbook_manager = SportsbookManager(
+            enabled_books,
+            api_key=api_key if use_live_api else None,
+            use_live_api=use_live_api
+        )
         
         # Initialize analytics
         self.performance_tracker = PerformanceTracker()
@@ -117,21 +126,22 @@ class SportsBettingBot:
             )
         
         # Initialize sport handlers
+        use_espn_api = self.config.get('apis', 'espn_api', 'enabled', default=True)
         self.sport_handlers = {}
         if self.config.is_sport_enabled('nba'):
-            self.sport_handlers['nba'] = NBAHandler()
+            self.sport_handlers['nba'] = NBAHandler(use_live_api=use_espn_api)
         if self.config.is_sport_enabled('nfl'):
-            self.sport_handlers['nfl'] = NFLHandler()
+            self.sport_handlers['nfl'] = NFLHandler(use_live_api=use_espn_api)
         if self.config.is_sport_enabled('mlb'):
-            self.sport_handlers['mlb'] = MLBHandler()
+            self.sport_handlers['mlb'] = MLBHandler(use_live_api=use_espn_api)
         if self.config.is_sport_enabled('nhl'):
-            self.sport_handlers['nhl'] = NHLHandler()
+            self.sport_handlers['nhl'] = NHLHandler(use_live_api=use_espn_api)
         if self.config.is_sport_enabled('soccer'):
-            self.sport_handlers['soccer'] = SoccerHandler()
+            self.sport_handlers['soccer'] = SoccerHandler(use_live_api=use_espn_api)
         if self.config.is_sport_enabled('ncaaf'):
-            self.sport_handlers['ncaaf'] = NCAAFHandler()
+            self.sport_handlers['ncaaf'] = NCAAFHandler(use_live_api=use_espn_api)
         if self.config.is_sport_enabled('ncaab'):
-            self.sport_handlers['ncaab'] = NCAABHandler()
+            self.sport_handlers['ncaab'] = NCAABHandler(use_live_api=use_espn_api)
         
         self.running = False
         self.day_count = 0

@@ -9,11 +9,66 @@ logger = setup_logger("nfl_handler")
 class NFLHandler:
     """Handle NFL-specific data"""
     
-    def __init__(self):
-        logger.info("NFL Handler initialized")
+    def __init__(self, use_live_api: bool = False):
+        """
+        Initialize NFL handler
+        
+        Args:
+            use_live_api: Whether to use live ESPN API or mock data
+        """
+        self.use_live_api = use_live_api
+        self.sports_data = None
+        
+        if self.use_live_api:
+            try:
+                from sports_data_api import SportsDataClient
+                self.sports_data = SportsDataClient()
+                logger.info("NFL Handler initialized with live ESPN API")
+            except Exception as e:
+                logger.warning(f"Failed to initialize live API, using mock data: {e}")
+                self.use_live_api = False
+        else:
+            logger.info("NFL Handler initialized with mock data")
     
     def fetch_games_today(self) -> List[Dict]:
-        """Get NFL games"""
+        """
+        Get all NFL games scheduled today
+        
+        Uses ESPN API if enabled, otherwise generates mock games
+        """
+        if self.use_live_api and self.sports_data:
+            try:
+                games_data = self.sports_data.get_nfl_games()
+                
+                formatted_games = []
+                for game in games_data:
+                    try:
+                        competitors = game.get('competitions', [{}])[0].get('competitors', [])
+                        if len(competitors) >= 2:
+                            home_team = competitors[0].get('team', {}).get('displayName', 'Unknown')
+                            away_team = competitors[1].get('team', {}).get('displayName', 'Unknown')
+                            
+                            formatted_games.append({
+                                'game_id': game.get('id', f'nfl_{len(formatted_games)}'),
+                                'home': home_team,
+                                'away': away_team,
+                                'start_time': game.get('date', datetime.now().isoformat()),
+                                'commence_time': game.get('date', datetime.now().isoformat())
+                            })
+                    except Exception as e:
+                        logger.debug(f"Error parsing game data: {e}")
+                        continue
+                
+                if formatted_games:
+                    logger.info(f"Fetched {len(formatted_games)} live NFL games from ESPN")
+                    return formatted_games
+                else:
+                    logger.info("No live NFL games found, using mock data")
+            
+            except Exception as e:
+                logger.error(f"Error fetching live NFL games: {e}")
+        
+        # Fallback to mock games
         games = [
             {
                 'game_id': 'nfl_001',
@@ -26,7 +81,7 @@ class NFLHandler:
                 'weather': {'temp_f': 45, 'wind_mph': 10, 'condition': 'clear'}
             }
         ]
-        logger.info(f"Fetched {len(games)} NFL games")
+        logger.info(f"Using {len(games)} mock NFL games")
         return games
     
     def get_team_stats(self, team_name: str) -> Dict:

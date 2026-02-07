@@ -17,16 +17,30 @@ class SportsbookManager:
     Aggregates odds for comparison and arbitrage detection
     """
     
-    def __init__(self, enabled_books: Dict[str, bool]):
+    def __init__(self, enabled_books: Dict[str, bool], api_key: str = None, use_live_api: bool = False):
         """
         Initialize sportsbook manager
         
         Args:
             enabled_books: Dict of book names to enabled status
+            api_key: API key for The Odds API (optional)
+            use_live_api: Whether to use live API or mock data
         """
         self.books = {}
+        self.use_live_api = use_live_api and api_key
+        self.odds_api = None
         
-        # Initialize enabled sportsbooks
+        # Initialize live API if enabled
+        if self.use_live_api:
+            try:
+                from odds_api_client import OddsAPIClient
+                self.odds_api = OddsAPIClient(api_key)
+                logger.info("Live Odds API enabled")
+            except Exception as e:
+                logger.warning(f"Failed to initialize live API, falling back to mock data: {e}")
+                self.use_live_api = False
+        
+        # Initialize enabled sportsbooks (for mock mode or fallback)
         for book_name, enabled in enabled_books.items():
             if enabled:
                 # In paper trading mode, use mock APIs
@@ -47,6 +61,48 @@ class SportsbookManager:
                     self.books[book_name] = PointsBetAPI()
         
         logger.info(f"Initialized {len(self.books)} sportsbooks: {list(self.books.keys())}")
+    
+    def get_all_games_odds(self, sport: str) -> List[Dict]:
+        """
+        Get odds for all games in a sport from live API
+        
+        Args:
+            sport: Sport name (e.g., 'nba', 'nfl')
+            
+        Returns:
+            List of games with odds from each bookmaker
+        """
+        if self.use_live_api and self.odds_api:
+            sport_key = self._map_sport_to_api_key(sport)
+            enabled_bookmaker_keys = [k for k, v in self.books.items()]
+            
+            try:
+                odds = self.odds_api.get_odds(
+                    sport_key=sport_key,
+                    regions=['us'],
+                    markets=['h2h', 'spreads', 'totals'],
+                    bookmakers=enabled_bookmaker_keys if enabled_bookmaker_keys else None
+                )
+                return odds
+            except Exception as e:
+                logger.error(f"Error fetching live odds: {e}")
+                return []
+        
+        # Fallback to empty list for mock mode
+        return []
+    
+    def _map_sport_to_api_key(self, sport: str) -> str:
+        """Map internal sport names to The Odds API sport keys"""
+        mapping = {
+            'nba': 'basketball_nba',
+            'nfl': 'americanfootball_nfl',
+            'mlb': 'baseball_mlb',
+            'nhl': 'icehockey_nhl',
+            'ncaaf': 'americanfootball_ncaaf',
+            'ncaab': 'basketball_ncaab',
+            'soccer': 'soccer_usa_mls'
+        }
+        return mapping.get(sport, sport)
     
     def get_all_odds(self, sport: str, game: str) -> Dict[str, Dict]:
         """

@@ -15,17 +15,67 @@ logger = setup_logger("nba_handler")
 class NBAHandler:
     """Handle NBA-specific data and game fetching"""
     
-    def __init__(self):
-        logger.info("NBA Handler initialized")
+    def __init__(self, use_live_api: bool = False):
+        """
+        Initialize NBA handler
+        
+        Args:
+            use_live_api: Whether to use live ESPN API or mock data
+        """
+        self.use_live_api = use_live_api
+        self.sports_data = None
+        
+        if self.use_live_api:
+            try:
+                from sports_data_api import SportsDataClient
+                self.sports_data = SportsDataClient()
+                logger.info("NBA Handler initialized with live ESPN API")
+            except Exception as e:
+                logger.warning(f"Failed to initialize live API, using mock data: {e}")
+                self.use_live_api = False
+        else:
+            logger.info("NBA Handler initialized with mock data")
     
     def fetch_games_today(self) -> List[Dict]:
         """
         Get all NBA games scheduled today
         
-        In production: Use nba_api or ESPN API
-        For now: Generate mock games
+        Uses ESPN API if enabled, otherwise generates mock games
         """
-        # Mock NBA games
+        if self.use_live_api and self.sports_data:
+            try:
+                games_data = self.sports_data.get_nba_games()
+                
+                formatted_games = []
+                for game in games_data:
+                    try:
+                        competitors = game.get('competitions', [{}])[0].get('competitors', [])
+                        if len(competitors) >= 2:
+                            # ESPN API structure: competitors[0] is typically home
+                            home_team = competitors[0].get('team', {}).get('displayName', 'Unknown')
+                            away_team = competitors[1].get('team', {}).get('displayName', 'Unknown')
+                            
+                            formatted_games.append({
+                                'game_id': game.get('id', f'nba_{len(formatted_games)}'),
+                                'home': home_team,
+                                'away': away_team,
+                                'start_time': game.get('date', datetime.now().isoformat()),
+                                'commence_time': game.get('date', datetime.now().isoformat())
+                            })
+                    except Exception as e:
+                        logger.debug(f"Error parsing game data: {e}")
+                        continue
+                
+                if formatted_games:
+                    logger.info(f"Fetched {len(formatted_games)} live NBA games from ESPN")
+                    return formatted_games
+                else:
+                    logger.info("No live NBA games found, using mock data")
+            
+            except Exception as e:
+                logger.error(f"Error fetching live NBA games: {e}")
+        
+        # Fallback to mock games
         games = [
             {
                 'game_id': 'nba_001',
@@ -49,7 +99,7 @@ class NBAHandler:
             }
         ]
         
-        logger.info(f"Fetched {len(games)} NBA games for today")
+        logger.info(f"Using {len(games)} mock NBA games")
         return games
     
     def get_team_stats(self, team_name: str) -> Dict:
