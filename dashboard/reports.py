@@ -40,9 +40,11 @@ class ReportGenerator:
         
         # Bankroll
         report.append("BANKROLL:")
-        report.append(f"  Current: ${stats['current_bankroll']:,.2f}")
-        report.append(f"  Starting: ${stats['starting_bankroll']:,.2f}")
-        report.append(f"  Net P&L: ${stats['net_profit']:+,.2f} ({stats['roi'] * 100:+.2f}%)")
+        report.append(f"  Current: ${paper_trader.bankroll:,.2f}")
+        report.append(f"  Starting: ${paper_trader.starting_bankroll:,.2f}")
+        net_profit = paper_trader.bankroll - paper_trader.starting_bankroll
+        roi = net_profit / paper_trader.starting_bankroll if paper_trader.starting_bankroll > 0 else 0
+        report.append(f"  Net P&L: ${net_profit:+,.2f} ({roi * 100:+.2f}%)")
         report.append("")
         
         # Today's activity
@@ -87,9 +89,11 @@ class ReportGenerator:
         
         # Bankroll
         report.append("BANKROLL:")
-        report.append(f"  Current: ${stats['current_bankroll']:,.2f}")
-        report.append(f"  Starting: ${stats['starting_bankroll']:,.2f}")
-        report.append(f"  Net P&L: ${stats['net_profit']:+,.2f} ({stats['roi'] * 100:+.2f}%)")
+        report.append(f"  Current: ${paper_trader.bankroll:,.2f}")
+        report.append(f"  Starting: ${paper_trader.starting_bankroll:,.2f}")
+        net_profit = paper_trader.bankroll - paper_trader.starting_bankroll
+        roi = net_profit / paper_trader.starting_bankroll if paper_trader.starting_bankroll > 0 else 0
+        report.append(f"  Net P&L: ${net_profit:+,.2f} ({roi * 100:+.2f}%)")
         report.append("")
         
         # Week's performance
@@ -155,9 +159,11 @@ class ReportGenerator:
         
         # Bankroll
         report.append("BANKROLL:")
-        report.append(f"  Current: ${stats['current_bankroll']:,.2f}")
-        report.append(f"  Starting: ${stats['starting_bankroll']:,.2f}")
-        report.append(f"  Net P&L: ${stats['net_profit']:+,.2f} ({stats['roi'] * 100:+.2f}%)")
+        report.append(f"  Current: ${paper_trader.bankroll:,.2f}")
+        report.append(f"  Starting: ${paper_trader.starting_bankroll:,.2f}")
+        net_profit = paper_trader.bankroll - paper_trader.starting_bankroll
+        roi = net_profit / paper_trader.starting_bankroll if paper_trader.starting_bankroll > 0 else 0
+        report.append(f"  Net P&L: ${net_profit:+,.2f} ({roi * 100:+.2f}%)")
         report.append("")
         
         # Month's performance
