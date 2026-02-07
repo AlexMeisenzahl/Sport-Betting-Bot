@@ -2,6 +2,7 @@
 Main Sports Betting Bot
 Orchestrates all strategies, sports, and sportsbooks
 Provides real-time dashboard
+Supports both paper trading (mock data) and live API integration
 """
 
 import time
@@ -17,6 +18,10 @@ from utils.notifier import Notifier
 from sportsbooks.book_manager import SportsbookManager
 from analytics.performance_tracker import PerformanceTracker
 from analytics.clv_tracker import CLVTracker
+
+# Import API clients
+from odds_api_client import OddsAPIClient
+from sports_data_api import SportsDataAPI
 
 # Import strategies
 from strategies.sports_arbitrage import SportsArbitrageStrategy
@@ -43,6 +48,7 @@ class SportsBettingBot:
     Main bot with comprehensive dashboard
     
     Tests ALL strategies across ALL sports to identify what works
+    Now supports live API integration with The Odds API and ESPN API
     """
     
     def __init__(self, config_path: str = "config.yaml"):
@@ -53,6 +59,10 @@ class SportsBettingBot:
         
         # Load configuration
         self.config = ConfigLoader(config_path)
+        
+        # Initialize API clients
+        logger.info("Initializing API clients...")
+        self._initialize_api_clients()
         
         # Initialize paper trading
         self.paper_trading = PaperTradingEngine(
@@ -69,12 +79,12 @@ class SportsBettingBot:
             kelly_fraction=self.config.get_kelly_fraction()
         )
         
-        # Initialize sportsbook manager
+        # Initialize sportsbook manager with API client
         enabled_books = {
             book: self.config.get('sportsbooks', book, 'enabled', default=False)
             for book in ['fanduel', 'draftkings', 'betmgm', 'caesars', 'pointsbet']
         }
-        self.sportsbook_manager = SportsbookManager(enabled_books)
+        self.sportsbook_manager = SportsbookManager(enabled_books, self.odds_api_client)
         
         # Initialize analytics
         self.performance_tracker = PerformanceTracker()
@@ -116,27 +126,62 @@ class SportsBettingBot:
                 min_edge_percent=self.config.get('strategies', 'live_betting', 'min_edge_percent', default=5)
             )
         
-        # Initialize sport handlers
+        # Initialize sport handlers with API client
         self.sport_handlers = {}
         if self.config.is_sport_enabled('nba'):
-            self.sport_handlers['nba'] = NBAHandler()
+            self.sport_handlers['nba'] = NBAHandler(self.sports_data_api)
         if self.config.is_sport_enabled('nfl'):
-            self.sport_handlers['nfl'] = NFLHandler()
+            self.sport_handlers['nfl'] = NFLHandler(self.sports_data_api)
         if self.config.is_sport_enabled('mlb'):
-            self.sport_handlers['mlb'] = MLBHandler()
+            self.sport_handlers['mlb'] = MLBHandler(self.sports_data_api)
         if self.config.is_sport_enabled('nhl'):
-            self.sport_handlers['nhl'] = NHLHandler()
+            self.sport_handlers['nhl'] = NHLHandler(self.sports_data_api)
         if self.config.is_sport_enabled('soccer'):
-            self.sport_handlers['soccer'] = SoccerHandler()
+            self.sport_handlers['soccer'] = SoccerHandler(self.sports_data_api)
         if self.config.is_sport_enabled('ncaaf'):
-            self.sport_handlers['ncaaf'] = NCAAFHandler()
+            self.sport_handlers['ncaaf'] = NCAAFHandler(self.sports_data_api)
         if self.config.is_sport_enabled('ncaab'):
-            self.sport_handlers['ncaab'] = NCAABHandler()
+            self.sport_handlers['ncaab'] = NCAABHandler(self.sports_data_api)
         
         self.running = False
         self.day_count = 0
         
         logger.info(f"Initialized with {len(self.strategies)} strategies and {len(self.sport_handlers)} sports")
+    
+    def _initialize_api_clients(self):
+        """Initialize API clients for odds and sports data"""
+        # Initialize The Odds API client
+        odds_config = self.config.get('data_sources', 'odds_api', default={})
+        api_key = odds_config.get('api_key', '')
+        use_mock = odds_config.get('use_mock', True)
+        
+        self.odds_api_client = OddsAPIClient(
+            api_key=api_key if api_key else None,
+            use_mock=use_mock or not api_key
+        )
+        
+        # Update cache TTL if configured
+        if 'cache_ttl_seconds' in odds_config:
+            self.odds_api_client.cache_ttl = odds_config['cache_ttl_seconds']
+        
+        # Update rate limit if configured
+        if 'rate_limit' in odds_config:
+            rate_limit = odds_config['rate_limit']
+            if 'min_interval_seconds' in rate_limit:
+                self.odds_api_client.min_request_interval = rate_limit['min_interval_seconds']
+        
+        # Initialize ESPN API client
+        espn_config = self.config.get('data_sources', 'espn_api', default={})
+        use_mock_espn = espn_config.get('use_mock', True)
+        
+        self.sports_data_api = SportsDataAPI(use_mock=use_mock_espn)
+        
+        # Update cache TTL if configured
+        if 'cache_ttl_seconds' in espn_config:
+            self.sports_data_api.cache_ttl = espn_config['cache_ttl_seconds']
+        
+        mode = "MOCK (Paper Trading)" if use_mock else "LIVE"
+        logger.info(f"API clients initialized in {mode} mode")
     
     def run(self, duration_days: int = 30):
         """
