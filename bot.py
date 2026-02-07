@@ -13,6 +13,7 @@ from utils.config_loader import ConfigLoader
 from utils.logger import setup_logger
 from utils.paper_trading import PaperTradingEngine
 from utils.risk_management import RiskManager
+from utils.notifier import Notifier
 from sportsbooks.book_manager import SportsbookManager
 from analytics.performance_tracker import PerformanceTracker
 from analytics.clv_tracker import CLVTracker
@@ -78,6 +79,20 @@ class SportsBettingBot:
         # Initialize analytics
         self.performance_tracker = PerformanceTracker()
         self.clv_tracker = CLVTracker()
+        
+        # Initialize notification system
+        try:
+            self.notifier = Notifier(self.config.config, logger)
+            logger.info("Notification system initialized successfully")
+            
+            # Send test notification if configured
+            test_config = self.config.get('notifications', 'test_mode', default={})
+            if test_config.get('enabled', False) and test_config.get('send_on_startup', False):
+                self.notifier.test_notifications()
+        except Exception as e:
+            logger.warning(f"Failed to initialize notifier: {e}")
+            logger.warning("Bot will continue without notifications")
+            self.notifier = None
         
         # Initialize strategies
         self.strategies = {}
@@ -147,6 +162,28 @@ class SportsBettingBot:
                 # Display dashboard
                 self.display_dashboard()
                 
+                # Check daily loss limit and send notification if approaching
+                if self.notifier:
+                    trigger_config = self.config.get('notification_triggers', 'daily_loss_limit', default={})
+                    if trigger_config.get('enabled', True):
+                        threshold_pct = trigger_config.get('threshold_percent', 80)
+                        stats = self.paper_trading.get_stats()
+                        starting_bankroll = stats['starting_bankroll']
+                        current_bankroll = stats['current_bankroll']
+                        max_daily_loss = starting_bankroll * self.config.get('risk_management', 'max_daily_loss_percent', default=0.10)
+                        
+                        # Calculate current loss (if any)
+                        if current_bankroll < starting_bankroll:
+                            current_loss = starting_bankroll - current_bankroll
+                            loss_pct = (current_loss / max_daily_loss) * 100
+                            
+                            if loss_pct >= threshold_pct:
+                                self.notifier.alert_daily_loss_limit(
+                                    current_loss,
+                                    max_daily_loss,
+                                    loss_pct
+                                )
+                
                 # Check if should halt due to losses
                 if self.risk_manager.should_halt_trading(self.paper_trading.get_bankroll()):
                     logger.warning("HALTING: Maximum drawdown reached")
@@ -157,14 +194,32 @@ class SportsBettingBot:
                 
             # Testing period complete
             logger.info(f"\n{'=' * 60}")
-            logger.info(f"30-DAY TEST COMPLETE!")
+            logger.info(f"{duration_days}-DAY TEST COMPLETE!")
             logger.info(f"{'=' * 60}\n")
+            
+            # Send test completion notification
+            if self.notifier:
+                trigger_config = self.config.get('notification_triggers', 'test_complete', default={})
+                if trigger_config.get('enabled', True):
+                    stats = self.paper_trading.get_stats()
+                    self.notifier.alert_test_complete(
+                        duration_days,
+                        stats['roi'] * 100,
+                        stats['total_bets']
+                    )
             
             # Generate final recommendations
             self._generate_final_recommendations()
             
         except KeyboardInterrupt:
             logger.info("\nBot stopped by user")
+        except Exception as e:
+            logger.error(f"Critical error: {e}")
+            # Send error notification
+            if self.notifier:
+                trigger_config = self.config.get('notification_triggers', 'error_critical', default={})
+                if trigger_config.get('enabled', True):
+                    self.notifier.alert_error("Critical Bot Error", str(e))
         finally:
             self.running = False
     
@@ -252,6 +307,21 @@ class SportsBettingBot:
             logger.info(f"    Predicted: {value_bet['predicted_spread']:.1f}, Line: {value_bet['bet_line']:.1f}")
             logger.info(f"    Edge: {value_bet['edge_points']:.1f} points")
             
+            # Send notification for high-value opportunity
+            if self.notifier:
+                trigger_config = self.config.get('notification_triggers', 'high_value_opportunity', default={})
+                if trigger_config.get('enabled', True):
+                    min_edge = trigger_config.get('min_edge_percent', 5.0)
+                    # Convert spread edge to percentage: 1 point edge on a -110 line ≈ 2% EV
+                    # This is a simplified conversion; actual value depends on the specific line
+                    edge_pct = abs(value_bet['edge_points']) * 2.0
+                    if edge_pct >= min_edge:
+                        self.notifier.alert_opportunity_found(
+                            sport,
+                            f"{game.get('home')} vs {game.get('away')}",
+                            edge_pct
+                        )
+            
             # Place bet if passes risk checks
             self._place_bet(sport, game, 'clv_model', value_bet)
     
@@ -327,6 +397,16 @@ class SportsBettingBot:
         
         if bet:
             logger.info(f"  ✓ Bet placed: {bet['id']} - ${stake:.2f}")
+            
+            # Send notification for trade execution
+            if self.notifier:
+                expected_profit = stake * 0.05  # Rough estimate
+                self.notifier.alert_trade_executed(
+                    sport,
+                    game.get('game_id', 'unknown'),
+                    stake,
+                    expected_profit
+                )
     
     def _settle_pending_bets(self):
         """Settle pending bets (simulate games finishing)"""

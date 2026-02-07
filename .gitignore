@@ -14,6 +14,7 @@ ENV/
 # Ignore log files
 *.log
 betting_bot_*.log
+logs/
 
 # Ignore IDE and editor files
 .vscode/
@@ -41,6 +42,7 @@ data/
 secrets.yaml
 .env
 *.key
+config.yaml  # Contains credentials - use config.example.yaml as template
 
 # Ignore build artifacts
 build/
