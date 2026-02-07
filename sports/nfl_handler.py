@@ -50,6 +50,7 @@ class NFLHandler:
                     'away_record': game_data['away'].get('record', '0-0'),
                     'status': game_data.get('status', 'pre'),
                     'venue': game_data.get('venue', ''),
+                    # ESPN API doesn't provide bye week, division game, or weather data
                     'home_off_bye': False,
                     'away_off_bye': False,
                     'division_game': False,

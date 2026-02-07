@@ -50,6 +50,7 @@ class MLBHandler:
                     'away_record': game_data['away'].get('record', '0-0'),
                     'status': game_data.get('status', 'pre'),
                     'venue': game_data.get('venue', ''),
+                    # Pitcher info requires additional API call to game details endpoint
                     'home_pitcher': {'name': 'TBD', 'era': 0.0},
                     'away_pitcher': {'name': 'TBD', 'era': 0.0}
                 }

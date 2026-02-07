@@ -58,11 +58,11 @@ class NBAHandler:
                     'away_record': game_data['away'].get('record', '0-0'),
                     'status': game_data.get('status', 'pre'),
                     'venue': game_data.get('venue', ''),
-                    # Note: Rest days would require historical data tracking
-                    'home_rest_days': 1,  # Default
-                    'away_rest_days': 1,  # Default
-                    'home_back_to_back': False,  # Would need to track
-                    'away_back_to_back': False   # Would need to track
+                    # Rest days require tracking team schedules over time
+                    'home_rest_days': 1,
+                    'away_rest_days': 1,
+                    'home_back_to_back': False,
+                    'away_back_to_back': False
                 }
                 games.append(game)
             
