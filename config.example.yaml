@@ -91,7 +91,23 @@ risk_management:
 
 # ===== DATA SOURCES =====
 data_sources:
+  # Free web scraping for live odds (NO API KEYS REQUIRED)
+  odds_scraping:
+    enabled: true
+    sources:
+      - oddsportal    # Primary source
+      - oddschecker   # Fallback source
+    rate_limit_seconds: 5      # Respectful scraping
+    cache_duration_minutes: 2  # Cache to minimize requests
+  
+  # Free ESPN API for schedules and stats (NO API KEY REQUIRED)
+  espn:
+    enabled: true
+    base_url: "https://site.api.espn.com/apis/site/v2/sports"
+  
+  # Legacy paid API (deprecated)
   odds_api:
+    enabled: false
     provider: "the-odds-api"
     api_key: ""  # Optional for paper trading
     update_frequency_seconds: 10

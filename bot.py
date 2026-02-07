@@ -69,12 +69,13 @@ class SportsBettingBot:
             kelly_fraction=self.config.get_kelly_fraction()
         )
         
-        # Initialize sportsbook manager
+        # Initialize sportsbook manager with FREE odds scraping
         enabled_books = {
             book: self.config.get('sportsbooks', book, 'enabled', default=False)
             for book in ['fanduel', 'draftkings', 'betmgm', 'caesars', 'pointsbet']
         }
-        self.sportsbook_manager = SportsbookManager(enabled_books)
+        use_free_odds = self.config.get('data_sources', 'odds_scraping', 'enabled', default=True)
+        self.sportsbook_manager = SportsbookManager(enabled_books, use_free_odds=use_free_odds)
         
         # Initialize analytics
         self.performance_tracker = PerformanceTracker()
