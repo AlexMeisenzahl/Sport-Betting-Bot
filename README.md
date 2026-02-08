@@ -58,6 +58,185 @@ Test betting strategies in **paper trading mode** for 30 days to identify what a
 
 ---
 
+## 📊 Paper Trading System
+
+The bot now includes a comprehensive **paper trading system** for testing strategies with real odds data before deploying real money.
+
+### Key Components
+
+1. **The Odds API Integration** (`sportsbooks/odds_api.py`)
+   - Real-time odds from FanDuel, DraftKings, BetMGM, Caesars
+   - Support for NBA, NFL, MLB, NHL, NCAAF, NCAAB
+   - Moneyline, spread, and totals markets
+   - 500 free API requests/month
+   - 5-minute caching to minimize API usage
+
+2. **SportsbookManager** (`sportsbooks/manager.py`)
+   - Intelligent multi-source fallback system
+   - Priority: The Odds API → OddsPortal → OddsChecker
+   - Automatic source selection and failover
+   - Unified data format across all sources
+
+3. **PaperTrader** (`betting/paper_trader.py`)
+   - Virtual betting with $10,000 starting bankroll
+   - Track all bets, calculate P&L and ROI
+   - Calculate CLV (Closing Line Value)
+   - Export to CSV for analysis
+   - Persistent state across sessions
+
+4. **Betting Strategies**
+   - **Value Betting** - Find +EV bets with 5%+ edge
+   - **Line Shopping** - Always get the best available odds
+   - **Arbitrage** - Risk-free guaranteed profit opportunities
+
+5. **Game Results Tracker** (`results/tracker.py`)
+   - Automatic bet settlement from API data
+   - Supports The Odds API and ESPN API
+   - Manual entry for missing results
+
+6. **Terminal Dashboard** (`dashboard/terminal_dashboard.py`)
+   - Live performance metrics
+   - Real-time bankroll tracking
+   - Recent and pending bets
+   - Strategy performance comparison
+   - Active opportunities display
+
+7. **Notification System** (`notifications/alerter.py`)
+   - Desktop alerts for high-value opportunities
+   - Arbitrage opportunity notifications
+   - Daily performance summaries
+   - API rate limit warnings
+
+### Quick Start
+
+#### 1. Get The Odds API Key (Free Tier)
+
+1. Visit https://the-odds-api.com/
+2. Sign up for free account (500 requests/month)
+3. Get your API key from the dashboard
+
+#### 2. Configure the Bot
+
+```bash
+# Copy example config
+cp config.example.yaml config.yaml
+
+# Edit config.yaml and add your API key
+api_keys:
+  the_odds_api: "YOUR_API_KEY_HERE"
+```
+
+Or use environment variable:
+```bash
+export THE_ODDS_API_KEY="your_api_key_here"
+```
+
+#### 3. Run the Paper Trading CLI
+
+**Analyze current opportunities:**
+```bash
+python paper_trading_cli.py analyze --sport NBA
+```
+
+**Run live monitoring:**
+```bash
+python paper_trading_cli.py live --sports NBA NFL
+```
+
+**Show performance dashboard:**
+```bash
+python paper_trading_cli.py dashboard
+```
+
+**Settle completed games:**
+```bash
+python paper_trading_cli.py settle
+```
+
+**Generate reports:**
+```bash
+# Daily summary
+python paper_trading_cli.py report --type daily
+
+# Weekly summary
+python paper_trading_cli.py report --type weekly
+
+# Strategy performance
+python paper_trading_cli.py report --type strategy
+```
+
+**Export bet history:**
+```bash
+python paper_trading_cli.py export --output my_bets.csv
+```
+
+### Configuration Options
+
+Edit `config.yaml` to customize:
+
+```yaml
+# Paper Trading Settings
+paper_trading:
+  starting_bankroll: 10000
+  bet_sizing_method: 'flat'  # 'flat', 'kelly', 'percentage'
+  flat_bet_size: 100
+  max_bet_size: 500
+  min_bet_size: 10
+
+# Strategy Settings
+strategies:
+  value_betting:
+    enabled: true
+    min_edge: 0.05  # 5% minimum edge
+    
+  line_shopping:
+    enabled: true
+    min_difference: 5  # 5 cents minimum
+    
+  arbitrage:
+    enabled: true
+    min_profit_margin: 0.01  # 1% minimum
+
+# Notification Settings
+notifications:
+  enabled: true
+  high_value_threshold: 0.10  # Notify if edge > 10%
+  arbitrage_alerts: true
+  daily_summary: true
+```
+
+### Understanding the Metrics
+
+- **Win Rate**: Percentage of won bets (need 52.4%+ to beat -110 vig)
+- **ROI**: Return on Investment (profit / total staked)
+- **CLV**: Closing Line Value - key metric for long-term profitability
+  - Positive CLV = you got better odds than closing line
+  - Consistently positive CLV = profitable long-term
+- **Edge**: Your estimated advantage over the bookmaker's odds
+- **Bankroll**: Current virtual bankroll
+
+### Data Sources Priority
+
+The system tries data sources in this order:
+
+1. **The Odds API** (if API key provided)
+   - Most reliable, real-time data
+   - 500 requests/month free tier
+   - Best odds coverage
+
+2. **OddsPortal Scraper** (free, no API key needed)
+   - Backup if API limit reached
+   - Slower updates
+   - Good coverage
+
+3. **OddsChecker Scraper** (free, no API key needed)
+   - Tertiary backup
+   - Alternative data source
+
+The bot automatically falls back if a source fails.
+
+---
+
 ## 🔔 Notification Setup
 
 The bot includes a comprehensive multi-channel notification system to keep you informed about opportunities, trades, and critical events.

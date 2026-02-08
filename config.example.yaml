@@ -1,17 +1,33 @@
 # ===== PAPER TRADING =====
 paper_trading:
   enabled: true
-  starting_bankroll: 500
+  starting_bankroll: 10000  # Starting bankroll in dollars
   realistic_mode: true
   simulate_vig: true
   simulate_delays: true
+  bet_sizing_method: 'flat'  # 'flat', 'kelly', 'percentage'
+  flat_bet_size: 100  # If using flat sizing
+  kelly_fraction: 0.25  # If using Kelly (quarter-Kelly recommended)
+  percentage_bet_size: 1  # If using percentage (1% of bankroll)
+  max_bet_size: 500  # Maximum single bet
+  min_bet_size: 10  # Minimum single bet
 
 # ===== STRATEGIES =====
 strategies:
+  # New paper trading strategies
+  value_betting:
+    enabled: true
+    min_edge: 0.05  # 5% minimum edge to bet
+    
+  line_shopping:
+    enabled: true
+    min_difference: 5  # Minimum 5 cents difference to recommend
+    
   arbitrage:
     enabled: true
-    min_profit_percent: 0.5
-    
+    min_profit_margin: 0.01  # 1% minimum profit
+  
+  # Legacy strategies (from existing system)
   clv_model:
     enabled: true
     min_edge_points: 1.5
@@ -176,6 +192,16 @@ notifications:
       summary: true       # Daily/weekly summaries
       status_change: true # Strategy enable/disable
   
+  # Alerter-specific thresholds
+  high_value_threshold: 0.10  # Notify if edge > 10%
+  arbitrage_alerts: true
+  line_shopping_min_diff: 10  # Minimum cents difference for alert
+  line_movement_threshold: 5  # Notify on line movement > 5 cents
+  bet_settlement_alerts: false  # Disabled by default to avoid spam
+  error_alerts: true
+  daily_summary: true
+  daily_summary_time: "20:00"  # 8 PM
+  
   # Email notifications via SMTP
   email:
     enabled: false  # Disabled by default - configure before enabling
@@ -259,3 +285,30 @@ notification_triggers:
   error_critical:
     enabled: true
     channels: ['desktop', 'email', 'telegram']
+
+# ===== DASHBOARD SETTINGS =====
+dashboard:
+  # Terminal dashboard settings
+  terminal:
+    enabled: true
+    refresh_interval: 5  # Refresh every 5 seconds
+    show_pending_bets: 10  # Show last 10 pending
+    show_settled_bets: 20  # Show last 20 settled
+  
+  # Web dashboard settings (existing Flask dashboard)
+  web:
+    enabled: true
+    host: "127.0.0.1"
+    port: 5000
+
+# ===== STORAGE SETTINGS =====
+storage:
+  bets_file: 'data/bets.json'
+  results_file: 'data/results.json'
+  state_file: 'data/paper_trader_state.json'
+  exports_dir: 'data/exports'
+  
+# ===== API KEYS =====
+# Add API keys here or use environment variables
+api_keys:
+  the_odds_api: null  # Set via environment variable THE_ODDS_API_KEY or here

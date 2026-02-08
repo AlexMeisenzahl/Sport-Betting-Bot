@@ -26,6 +26,9 @@ plyer>=2.1.0           # Cross-platform desktop notifications
 # Optional notification enhancements
 # win10toast>=0.9      # Windows 10 toast notifications (Windows only)
 
+# Paper trading system dependencies
+# Already included above: requests, PyYAML, rich, plyer
+
 # For potential future real API integrations
 # (Currently using mock data for paper trading)
 
